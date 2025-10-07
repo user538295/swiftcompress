@@ -23,25 +23,27 @@ tools to resolve library id and get library docs without me having to explicitly
 
 ## Architecture Documentation
 
-Comprehensive architectural documentation has been created. **Start with [README.md](./README.md)** for the complete overview.
+Comprehensive architectural documentation has been created. **Start with [ARCHITECTURE.md](./Documentation/ARCHITECTURE.md)** for the complete overview.
 
 ### Core Documentation Files
 
-1. **[README.md](./README.md)** - Architecture overview, roadmap, and quick reference
-2. **[architecture_overview.md](./architecture_overview.md)** - System design and architectural approach
-3. **[component_specifications.md](./component_specifications.md)** - Detailed component contracts
-4. **[module_structure.md](./module_structure.md)** - File organization and project structure
-5. **[error_handling_strategy.md](./error_handling_strategy.md)** - Error handling patterns
-6. **[testing_strategy.md](./testing_strategy.md)** - Testing approach and requirements
-7. **[data_flow_diagrams.md](./data_flow_diagrams.md)** - Visual data flow representations
+1. **[README.md](./README.md)** - Project overview, features, quick start (GitHub landing page)
+2. **[SETUP.md](./SETUP.md)** - Development environment setup guide
+3. **[ARCHITECTURE.md](./Documentation/ARCHITECTURE.md)** - Complete architecture overview, roadmap, and quick reference
+4. **[architecture_overview.md](./Documentation/architecture_overview.md)** - System design and architectural approach
+5. **[component_specifications.md](./Documentation/component_specifications.md)** - Detailed component contracts
+6. **[module_structure.md](./Documentation/module_structure.md)** - File organization and project structure
+7. **[error_handling_strategy.md](./Documentation/error_handling_strategy.md)** - Error handling patterns
+8. **[testing_strategy.md](./Documentation/testing_strategy.md)** - Testing approach and requirements
+9. **[data_flow_diagrams.md](./Documentation/data_flow_diagrams.md)** - Visual data flow representations
 
 ### Architecture Decision Records (ADRs)
 
-- **[ADR-001](./ADRs/ADR-001-clean-architecture.md)** - Clean Architecture for CLI tool
-- **[ADR-002](./ADRs/ADR-002-protocol-abstraction.md)** - Protocol-based algorithm abstraction
-- **[ADR-003](./ADRs/ADR-003-stream-processing.md)** - Stream-based file processing
-- **[ADR-004](./ADRs/ADR-004-dependency-injection.md)** - Dependency injection strategy
-- **[ADR-005](./ADRs/ADR-005-explicit-algorithm-selection.md)** - Explicit algorithm selection
+- **[ADR-001](./Documentation/ADRs/ADR-001-clean-architecture.md)** - Clean Architecture for CLI tool
+- **[ADR-002](./Documentation/ADRs/ADR-002-protocol-abstraction.md)** - Protocol-based algorithm abstraction
+- **[ADR-003](./Documentation/ADRs/ADR-003-stream-processing.md)** - Stream-based file processing
+- **[ADR-004](./Documentation/ADRs/ADR-004-dependency-injection.md)** - Dependency injection strategy
+- **[ADR-005](./Documentation/ADRs/ADR-005-explicit-algorithm-selection.md)** - Explicit algorithm selection
 
 ## Architecture Overview
 
@@ -76,7 +78,7 @@ Comprehensive architectural documentation has been created. **Start with [README
 
 ## Project Structure
 
-Architecture complete. Implementation pending. Follow the 4-week roadmap in [README.md](./README.md):
+Architecture complete. Implementation pending. Follow the 4-week roadmap in [ARCHITECTURE.md](./Documentation/ARCHITECTURE.md):
 
 - **Week 1**: Foundation layer (protocols, domain logic)
 - **Week 2**: Infrastructure layer (file I/O, algorithms)
@@ -177,12 +179,16 @@ swiftcompress x <inputfile> -m <algorithm> [-o <outputfile>] [-f]
 
 ## Getting Started
 
-**For Architecture Review:** Start with [README.md](./README.md)
+**For Project Overview:** Start with [README.md](./README.md)
+
+**For Architecture Review:** Read [ARCHITECTURE.md](./Documentation/ARCHITECTURE.md)
+
+**For Development Setup:** Follow [SETUP.md](./SETUP.md)
 
 **For Implementation:**
-1. Review all architectural documentation
-2. Set up Xcode project structure (see [module_structure.md](./module_structure.md))
-3. Configure CocoaPods for CLI parsing
+1. Review all architectural documentation in Documentation/
+2. Set up development environment (see [SETUP.md](./SETUP.md))
+3. Study component specifications (see [component_specifications.md](./Documentation/component_specifications.md))
 4. Begin Week 1 tasks (Foundation layer)
 5. Follow TDD approach with 85%+ coverage target
 
