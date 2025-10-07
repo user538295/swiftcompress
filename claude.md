@@ -14,7 +14,7 @@ The project follows **Clean Architecture** principles with 4 distinct layers, en
 - **Platform**: macOS 12.0+
 - **Architecture**: Clean Architecture (4 layers)
 - **Framework**: Apple Compression framework
-- **Dependencies**: CocoaPods for CLI argument parsing
+- **Dependencies**: Swift Package Manager with ArgumentParser
 - **Testing**: XCTest with 85%+ coverage target
 
 Always use context7 when I need code generation, setup or configuration steps, or
@@ -147,7 +147,7 @@ swiftcompress x <inputfile> -m <algorithm> [-o <outputfile>] [-f]
 - [ ] CompressCommand & DecompressCommand
 - [ ] CommandExecutor
 - [ ] ErrorHandler (error translation)
-- [ ] ArgumentParser (CocoaPods integration)
+- [ ] ArgumentParser (Swift ArgumentParser integration)
 - [ ] CommandRouter & OutputFormatter
 - [ ] Dependency wiring in main.swift
 - [ ] Layer tests

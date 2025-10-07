@@ -144,7 +144,7 @@ Traditional Clean Architecture is often presented for web or mobile applications
 
 5. **Framework Independence**
    - Domain layer could be reused in GUI application
-   - Could switch from CocoaPods to Swift Package Manager without affecting domain
+   - Using Swift Package Manager for dependency management
    - Business rules portable to other platforms
 
 ### Negative

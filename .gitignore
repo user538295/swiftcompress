@@ -26,11 +26,6 @@ xcuserdata/
 Package.resolved
 DerivedData/
 
-## CocoaPods
-Pods/
-*.xcworkspace/
-!Podfile.lock
-
 ## Build results
 .DS_Store
 build/

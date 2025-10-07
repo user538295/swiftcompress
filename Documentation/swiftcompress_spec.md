@@ -13,7 +13,7 @@ It should:\
 Tech info:
 - In the implementation we use apple's compression solution: https://developer.apple.com/documentation/Compression
 - The app written in Swift language.
-- Cocoapods used for third party libraries (like command line parameter handling)
+- Swift Package Manager used for dependencies (Swift ArgumentParser for CLI)
 
 ------------------------------------------------------------------------
 

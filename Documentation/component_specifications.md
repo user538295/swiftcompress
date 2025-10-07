@@ -112,7 +112,7 @@ enum CommandType {
 - Test default value application
 
 **Implementation Guidelines**:
-- Wrap third-party CLI parsing library (from CocoaPods)
+- Use Swift ArgumentParser for CLI parsing
 - Translate library-specific errors to domain errors
 - Keep parsing logic separate from validation logic
 - Provide clear error messages for each failure case
@@ -1194,7 +1194,7 @@ User Input → Parse → Validate → Execute → Process → Output
 ### Phase 3: CLI Interface (Week 3)
 
 **Priority 5** (Depends on Phase 2):
-- ArgumentParser (with CocoaPods integration)
+- ArgumentParser (with Swift ArgumentParser integration)
 - CommandRouter
 - OutputFormatter
 - main.swift

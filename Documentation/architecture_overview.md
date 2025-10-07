@@ -4,7 +4,7 @@
 **Type**: macOS CLI Tool
 **Language**: Swift
 **Primary Framework**: Apple Compression Framework
-**Dependency Management**: CocoaPods
+**Dependency Management**: Swift Package Manager
 
 ## Executive Summary
 
@@ -134,7 +134,7 @@ graph TD
 **Purpose**: Handle all user interaction through command-line interface
 
 **Responsibilities**:
-- Parse command-line arguments using CocoaPods library
+- Parse command-line arguments using Swift ArgumentParser
 - Route commands to appropriate handlers
 - Format output for stdout/stderr
 - Set process exit codes
@@ -460,7 +460,7 @@ swiftcompress/
 ## Dependencies and Integration Points
 
 ### External Dependencies
-- **CocoaPods Library**: CLI argument parsing (e.g., Swift-Argument-Parser)
+- **Swift ArgumentParser**: CLI argument parsing (Official Apple library)
 - **Apple Compression Framework**: Core compression functionality
 - **Foundation Framework**: File system operations, data handling
 

@@ -8,10 +8,6 @@
 - **macOS**: 12.0 or later
 - **Xcode**: 14.0 or later (installed via App Store)
 - **Swift**: 5.9+ (included with Xcode)
-- **CocoaPods** (optional): For alternative dependency management
-  ```bash
-  sudo gem install cocoapods
-  ```
 
 ## Quick Start
 
@@ -75,7 +71,6 @@ swiftcompress/
 │   └── ADRs/                 # Architecture Decision Records
 │
 ├── Package.swift             # Swift Package Manager manifest
-├── Podfile                   # CocoaPods dependencies (alternative)
 └── README.md                 # Project overview (GitHub)
 ```
 

@@ -15,7 +15,7 @@ SwiftCompress is a macOS command-line tool for compressing and decompressing fil
 - **Platform**: macOS only
 - **Language**: Swift
 - **Architecture**: Clean Architecture with 4 layers
-- **Dependency Management**: CocoaPods
+- **Dependency Management**: Swift Package Manager
 - **Core Framework**: Apple Compression Framework
 - **Target Users**: CLI users, scripters, power users
 
@@ -245,8 +245,8 @@ ADRs document key architectural decisions with context, rationale, and consequen
 |-----------|-----------|-----------|
 | Language | Swift 5.9+ | Native macOS development, type safety |
 | Compression | Apple Compression Framework | Native, optimized, no external deps |
-| Dependency Management | CocoaPods | Established, widely used |
-| CLI Parsing | Third-party via CocoaPods | Professional argument parsing |
+| Dependency Management | Swift Package Manager | Native, integrated, modern |
+| CLI Parsing | Swift ArgumentParser | Official Apple library, type-safe |
 | Testing | XCTest | Native Swift testing framework |
 | CI/CD | GitHub Actions | Automation (future) |
 
@@ -288,7 +288,7 @@ ADRs document key architectural decisions with context, rationale, and consequen
 1. Implement CompressCommand and DecompressCommand
 2. Implement CommandExecutor
 3. Implement ErrorHandler (error translation)
-4. Implement ArgumentParser (integrate CocoaPods library)
+4. Implement ArgumentParser (Swift ArgumentParser integration)
 5. Implement CommandRouter
 6. Implement OutputFormatter
 7. Wire dependencies in main.swift
@@ -533,7 +533,7 @@ This architecture is successfully implemented when:
 ## Next Steps for Implementation Team
 
 1. **Review all documentation** (start with Architecture Overview)
-2. **Set up development environment** (Xcode, CocoaPods)
+2. **Set up development environment** (Xcode, Swift Package Manager)
 3. **Create project structure** (following Module Structure guide)
 4. **Begin with Week 1 roadmap** (Foundation Layer)
 5. **Follow TDD approach** (write tests first)
