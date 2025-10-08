@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(swift build)",
+      "Bash(swift test)",
+      "Bash(swift package:*)",
+      "Bash(open:*)",
+      "Bash(swift test:*)",
+      "Bash(for file in Sources/Infrastructure/Algorithms/{LZ4,Zlib,LZMA}Algorithm.swift)",
+      "Bash(do)",
+      "Bash(done)",
+      "Bash(for:*)",
+      "Bash(do sed -i '' 's/var stream = compression_stream(dst_ptr: .none, dst_size: 0, src_ptr: .none, src_size: 0, state: .none)/var stream = compression_stream(dst_ptr: UnsafeMutablePointer<UInt8>?(nil), dst_size: 0, src_ptr: UnsafePointer<UInt8>?(nil), src_size: 0, state: UnsafeMutablePointer<Void>?(nil))/g' \"$file\" done)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
