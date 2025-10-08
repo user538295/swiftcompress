@@ -11,7 +11,9 @@
       "Bash(do)",
       "Bash(done)",
       "Bash(for:*)",
-      "Bash(do sed -i '' 's/var stream = compression_stream(dst_ptr: .none, dst_size: 0, src_ptr: .none, src_size: 0, state: .none)/var stream = compression_stream(dst_ptr: UnsafeMutablePointer<UInt8>?(nil), dst_size: 0, src_ptr: UnsafePointer<UInt8>?(nil), src_size: 0, state: UnsafeMutablePointer<Void>?(nil))/g' \"$file\" done)"
+      "Bash(do sed -i '' 's/var stream = compression_stream(dst_ptr: .none, dst_size: 0, src_ptr: .none, src_size: 0, state: .none)/var stream = compression_stream(dst_ptr: UnsafeMutablePointer<UInt8>?(nil), dst_size: 0, src_ptr: UnsafePointer<UInt8>?(nil), src_size: 0, state: UnsafeMutablePointer<Void>?(nil))/g' \"$file\" done)",
+      "Bash(find:*)",
+      "Bash(swiftc:*)"
     ],
     "deny": [],
     "ask": []
