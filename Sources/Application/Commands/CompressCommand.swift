@@ -2,7 +2,7 @@ import Foundation
 
 /// Command for orchestrating file compression workflow
 /// Application layer component that coordinates domain and infrastructure services
-final class CompressCommand {
+final class CompressCommand: Command {
 
     // MARK: - Properties
 

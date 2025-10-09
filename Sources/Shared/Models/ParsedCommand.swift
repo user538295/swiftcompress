@@ -9,6 +9,7 @@ struct ParsedCommand: Equatable {
     let outputPath: String?     // Optional, uses default if nil
     let forceOverwrite: Bool
 
+    /// Standard initializer for ParsedCommand
     init(
         commandType: CommandType,
         inputPath: String,

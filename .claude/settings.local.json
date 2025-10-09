@@ -13,7 +13,17 @@
       "Bash(for:*)",
       "Bash(do sed -i '' 's/var stream = compression_stream(dst_ptr: .none, dst_size: 0, src_ptr: .none, src_size: 0, state: .none)/var stream = compression_stream(dst_ptr: UnsafeMutablePointer<UInt8>?(nil), dst_size: 0, src_ptr: UnsafePointer<UInt8>?(nil), src_size: 0, state: UnsafeMutablePointer<Void>?(nil))/g' \"$file\" done)",
       "Bash(find:*)",
-      "Bash(swiftc:*)"
+      "Bash(swiftc:*)",
+      "Bash(test:*)",
+      "Bash(swift build:*)",
+      "Bash(cat:*)",
+      "Bash(/Users/gergelymancz/Documents/Development/swiftcompress/.build/debug/swiftcompress --help)",
+      "Bash(/Users/gergelymancz/Documents/Development/swiftcompress/.build/debug/swiftcompress:*)",
+      "Read(//private/tmp/**)",
+      "Bash(swift run swiftcompress:*)",
+      "Bash(timeout 10 swift run swiftcompress:*)",
+      "Bash(.build/debug/swiftcompress:*)",
+      "Bash(echo \"Exit code: $?\")"
     ],
     "deny": [],
     "ask": []

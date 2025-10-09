@@ -2,7 +2,7 @@ import Foundation
 
 /// Command for orchestrating file decompression workflow
 /// Follows Clean Architecture principles - coordinates domain and infrastructure layers
-final class DecompressCommand {
+final class DecompressCommand: Command {
 
     // MARK: - Properties
 
