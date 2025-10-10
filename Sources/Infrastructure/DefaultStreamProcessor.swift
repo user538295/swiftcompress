@@ -22,7 +22,8 @@ final class DefaultStreamProcessor: StreamProcessorProtocol {
         bufferSize: Int = defaultBufferSize
     ) throws {
         // Delegate to algorithm's stream compression
-        try algorithm.compressStream(input: input, output: output, bufferSize: bufferSize)
+        // Use default balanced level since this is a generic processor
+        try algorithm.compressStream(input: input, output: output, bufferSize: bufferSize, compressionLevel: .balanced)
     }
 
     // MARK: - Decompression Processing

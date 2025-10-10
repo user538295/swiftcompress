@@ -320,14 +320,16 @@ final class CLIIntegrationTests: XCTestCase {
     func testCompressMissingAlgorithm() {
         // Given
         let inputFile = createTestFile(name: "test.txt", content: "test")
+        let outputFile = inputFile.path + ".lzfse"
 
         // When
-        let result = runCLI(arguments: ["c", inputFile.path])
+        // With compression level support, -m is now optional, defaults to balanced (lzfse)
+        // Explicitly specify output to avoid stdout detection in test environment
+        let result = runCLI(arguments: ["c", inputFile.path, "-o", outputFile])
 
         // Then
-        XCTAssertNotEqual(result.exitCode, 0, "Should fail without algorithm")
-        XCTAssertTrue(result.stderr.contains("Error") || result.stderr.contains("Missing"),
-                      "Should indicate missing argument")
+        XCTAssertEqual(result.exitCode, 0, "Should succeed with default algorithm (lzfse)")
+        XCTAssertTrue(fileExists(outputFile), "Output file should exist with default algorithm")
     }
 
     func testCompressInvalidAlgorithm() {

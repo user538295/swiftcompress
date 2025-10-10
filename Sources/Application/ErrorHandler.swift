@@ -65,6 +65,9 @@ final class ErrorHandler: ErrorHandlerProtocol {
         case .invalidFlagValue(let flag, let value, let expected):
             message = "Error: Invalid value '\(value)' for flag \(flag). Expected: \(expected)"
 
+        case .conflictingFlags(let flags, let errorMessage):
+            message = "Error: Conflicting flags: \(flags.joined(separator: ", ")). \(errorMessage)"
+
         case .helpRequested:
             // Help is not an error condition
             message = "" // Will be handled by OutputFormatter

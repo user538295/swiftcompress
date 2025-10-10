@@ -10,6 +10,7 @@ final class CompressCommand: Command {
     let algorithmName: String
     let outputDestination: OutputDestination?
     let forceOverwrite: Bool
+    let compressionLevel: CompressionLevel
 
     // Injected dependencies
     private let fileHandler: FileHandlerProtocol
@@ -25,6 +26,7 @@ final class CompressCommand: Command {
     ///   - algorithmName: Name of compression algorithm (lzfse, lz4, zlib, lzma)
     ///   - outputDestination: Optional output destination (defaults based on input source)
     ///   - forceOverwrite: Whether to overwrite existing output file
+    ///   - compressionLevel: Compression level (fast, balanced, best)
     ///   - fileHandler: File system operations handler
     ///   - pathResolver: Path resolution service
     ///   - validationRules: Business validation rules
@@ -34,6 +36,7 @@ final class CompressCommand: Command {
         algorithmName: String,
         outputDestination: OutputDestination? = nil,
         forceOverwrite: Bool = false,
+        compressionLevel: CompressionLevel = .balanced,
         fileHandler: FileHandlerProtocol,
         pathResolver: FilePathResolver,
         validationRules: ValidationRules,
@@ -43,6 +46,7 @@ final class CompressCommand: Command {
         self.algorithmName = algorithmName
         self.outputDestination = outputDestination
         self.forceOverwrite = forceOverwrite
+        self.compressionLevel = compressionLevel
         self.fileHandler = fileHandler
         self.pathResolver = pathResolver
         self.validationRules = validationRules
@@ -135,10 +139,13 @@ final class CompressCommand: Command {
         }
 
         // Step 8: Execute compression
+        // Use buffer size from compression level for optimal performance
+        let bufferSize = compressionLevel.bufferSize
         try algorithm.compressStream(
             input: inputStream,
             output: outputStream,
-            bufferSize: 65536  // 64 KB buffer
+            bufferSize: bufferSize,
+            compressionLevel: compressionLevel
         )
 
         // Mark success

@@ -4,6 +4,7 @@ import Foundation
 /// Mock compression algorithm for testing
 class MockCompressionAlgorithm: CompressionAlgorithmProtocol {
     let name: String
+    let supportsCustomLevels = false
 
     // Test configuration
     var compressResult: Data?
@@ -29,7 +30,7 @@ class MockCompressionAlgorithm: CompressionAlgorithmProtocol {
         return decompressResult ?? input
     }
 
-    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int) throws {
+    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int, compressionLevel: CompressionLevel = .balanced) throws {
         // Stub implementation for testing
     }
 

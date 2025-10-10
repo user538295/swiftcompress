@@ -119,7 +119,7 @@ final class LargeFileIntegrationTests: XCTestCase {
         let inputStream = InputStream(url: inputFile)!
         let compressedOutputStream = OutputStream(url: compressedFile, append: false)!
 
-        try algorithm.compressStream(input: inputStream, output: compressedOutputStream, bufferSize: 65536)
+        try algorithm.compressStream(input: inputStream, output: compressedOutputStream, bufferSize: 65536, compressionLevel: .balanced)
 
         // Verify compressed file exists and is smaller
         let originalSize = try FileManager.default.attributesOfItem(atPath: inputFile.path)[.size] as! Int64
@@ -158,7 +158,7 @@ final class LargeFileIntegrationTests: XCTestCase {
         let inputStream = InputStream(url: inputFile)!
         let compressedOutputStream = OutputStream(url: compressedFile, append: false)!
 
-        try algorithm.compressStream(input: inputStream, output: compressedOutputStream, bufferSize: 65536)
+        try algorithm.compressStream(input: inputStream, output: compressedOutputStream, bufferSize: 65536, compressionLevel: .balanced)
 
         let originalSize = try FileManager.default.attributesOfItem(atPath: inputFile.path)[.size] as! Int64
         let compressedSize = try FileManager.default.attributesOfItem(atPath: compressedFile.path)[.size] as! Int64
@@ -196,7 +196,7 @@ final class LargeFileIntegrationTests: XCTestCase {
         let compressedOutputStream = OutputStream(url: compressedFile, append: false)!
 
         let startTime = Date()
-        try algorithm.compressStream(input: inputStream, output: compressedOutputStream, bufferSize: 65536)
+        try algorithm.compressStream(input: inputStream, output: compressedOutputStream, bufferSize: 65536, compressionLevel: .balanced)
         let compressionTime = Date().timeIntervalSince(startTime)
 
         // Verify compressed file
@@ -269,7 +269,7 @@ final class LargeFileIntegrationTests: XCTestCase {
             let compressedOutputStream = OutputStream(url: compressedFile, append: false)!
 
             let startTime = Date()
-            try algorithm.compressStream(input: inputStream, output: compressedOutputStream, bufferSize: 65536)
+            try algorithm.compressStream(input: inputStream, output: compressedOutputStream, bufferSize: 65536, compressionLevel: .balanced)
             let compressionTime = Date().timeIntervalSince(startTime)
 
             // Get compressed size

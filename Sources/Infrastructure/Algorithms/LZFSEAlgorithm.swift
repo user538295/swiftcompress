@@ -9,6 +9,10 @@ final class LZFSEAlgorithm: CompressionAlgorithmProtocol {
 
     let name = "lzfse"
 
+    /// Apple's Compression framework does not support custom compression levels
+    /// This property indicates future extensibility when/if Apple adds level support
+    let supportsCustomLevels = false
+
     // MARK: - Initialization
 
     init() {}
@@ -82,8 +86,12 @@ final class LZFSEAlgorithm: CompressionAlgorithmProtocol {
     func compressStream(
         input: InputStream,
         output: OutputStream,
-        bufferSize: Int
+        bufferSize: Int,
+        compressionLevel: CompressionLevel = .balanced
     ) throws {
+        // Note: Apple's Compression framework does not support compression levels
+        // The compressionLevel parameter is accepted for future extensibility
+        // and to maintain a consistent API across all algorithms
         try StreamingUtilities.processCompressionStream(
             input: input,
             output: output,

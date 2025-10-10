@@ -6,6 +6,11 @@ protocol CompressionAlgorithmProtocol {
     /// Algorithm name (e.g., "lzfse", "lz4", "zlib", "lzma")
     var name: String { get }
 
+    /// Indicates whether this algorithm supports custom compression levels
+    /// Currently false for all algorithms as Apple's Compression framework
+    /// does not provide native level parameters
+    var supportsCustomLevels: Bool { get }
+
     /// Compress data in-memory
     /// - Parameter input: Data to compress
     /// - Returns: Compressed data
@@ -23,11 +28,13 @@ protocol CompressionAlgorithmProtocol {
     ///   - input: Input stream
     ///   - output: Output stream
     ///   - bufferSize: Buffer size in bytes (typically 64KB)
+    ///   - compressionLevel: Compression level hint (currently unused by Apple's framework)
     /// - Throws: InfrastructureError if compression fails
     func compressStream(
         input: InputStream,
         output: OutputStream,
-        bufferSize: Int
+        bufferSize: Int,
+        compressionLevel: CompressionLevel
     ) throws
 
     /// Stream-based decompression for large files

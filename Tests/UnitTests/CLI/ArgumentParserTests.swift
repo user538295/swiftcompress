@@ -293,29 +293,21 @@ final class ArgumentParserTests: XCTestCase {
         }
     }
 
-    func testParseCompressCommand_MissingMethod_ThrowsError() {
+    func testParseCompressCommand_MissingMethod_UsesDefaultAlgorithm() throws {
         // Arrange
+        // With compression level support, -m flag is now optional
+        // It defaults to the balanced level's recommended algorithm (lzfse)
         let args = ["swiftcompress", "c", "input.txt"]
 
-        // Act & Assert
-        XCTAssertThrowsError(try sut.parse(args)) { error in
-            guard let cliError = error as? CLIError else {
-                XCTFail("Expected CLIError but got \(type(of: error))")
-                return
-            }
+        // Act
+        let result = try sut.parse(args)
 
-            if case .missingRequiredArgument(let name) = cliError {
-                // ArgumentParser may report this as "method", "--method", "-m", or "required argument"
-                // The key is that it detected a missing required argument
-                XCTAssertTrue(name.lowercased().contains("method") ||
-                             name.contains("-m") ||
-                             name.lowercased().contains("required") ||
-                             name.lowercased().contains("argument"),
-                              "Expected missing method error, got: \(name)")
-            } else {
-                XCTFail("Expected missingRequiredArgument error but got \(cliError)")
-            }
-        }
+        // Assert
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.commandType, .compress)
+        XCTAssertEqual(result?.compressionLevel, .balanced, "Should default to balanced level")
+        XCTAssertEqual(result?.algorithmName, "lzfse", "Should use balanced level's recommended algorithm")
+        assertInputFile(result, equals: "input.txt")
     }
 
     func testParseDecompressCommand_MissingInputFile_HandlesBothScenarios() throws {
@@ -611,5 +603,214 @@ final class ArgumentParserTests: XCTestCase {
         let result = try sut.parse(args)
 
         assertInputFile(result, equals: longPath)
+    }
+
+    // MARK: - Compression Level Flag Tests
+
+    func testParseCompressCommand_WithFastFlag_SetsLevelAndAlgorithm() throws {
+        // Arrange
+        let args = ["swiftcompress", "c", "input.txt", "--fast"]
+
+        // Act
+        let result = try sut.parse(args)
+
+        // Assert
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.commandType, .compress)
+        assertInputFile(result, equals: "input.txt")
+        XCTAssertEqual(result?.compressionLevel, .fast, "Should set compression level to fast")
+        XCTAssertEqual(result?.algorithmName, "lz4", "Fast level should recommend LZ4 algorithm")
+    }
+
+    func testParseCompressCommand_WithBestFlag_SetsLevelAndAlgorithm() throws {
+        // Arrange
+        let args = ["swiftcompress", "c", "input.txt", "--best"]
+
+        // Act
+        let result = try sut.parse(args)
+
+        // Assert
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.commandType, .compress)
+        assertInputFile(result, equals: "input.txt")
+        XCTAssertEqual(result?.compressionLevel, .best, "Should set compression level to best")
+        XCTAssertEqual(result?.algorithmName, "lzma", "Best level should recommend LZMA algorithm")
+    }
+
+    func testParseCompressCommand_WithoutLevelFlags_DefaultsToBalanced() throws {
+        // Arrange
+        let args = ["swiftcompress", "c", "input.txt", "-m", "lzfse"]
+
+        // Act
+        let result = try sut.parse(args)
+
+        // Assert
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.compressionLevel, .balanced, "Should default to balanced compression level")
+    }
+
+    func testParseCompressCommand_FastFlagWithExplicitAlgorithm_UsesExplicitAlgorithm() throws {
+        // Arrange
+        let args = ["swiftcompress", "c", "input.txt", "--fast", "-m", "zlib"]
+
+        // Act
+        let result = try sut.parse(args)
+
+        // Assert
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.compressionLevel, .fast, "Should set compression level to fast")
+        XCTAssertEqual(result?.algorithmName, "zlib", "Should use explicit algorithm, not recommended")
+    }
+
+    func testParseCompressCommand_BestFlagWithExplicitAlgorithm_UsesExplicitAlgorithm() throws {
+        // Arrange
+        let args = ["swiftcompress", "c", "input.txt", "--best", "-m", "lz4"]
+
+        // Act
+        let result = try sut.parse(args)
+
+        // Assert
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.compressionLevel, .best, "Should set compression level to best")
+        XCTAssertEqual(result?.algorithmName, "lz4", "Should use explicit algorithm, not recommended")
+    }
+
+    func testParseCompressCommand_ConflictingLevelFlags_ThrowsError() {
+        // Arrange
+        let args = ["swiftcompress", "c", "input.txt", "--fast", "--best"]
+
+        // Act & Assert
+        XCTAssertThrowsError(try sut.parse(args)) { error in
+            guard let cliError = error as? CLIError else {
+                XCTFail("Expected CLIError but got \(type(of: error))")
+                return
+            }
+
+            if case .conflictingFlags(let flags, let message) = cliError {
+                XCTAssertTrue(flags.contains("--fast"), "Should list --fast in conflicting flags")
+                XCTAssertTrue(flags.contains("--best"), "Should list --best in conflicting flags")
+                XCTAssertTrue(message.contains("Cannot specify both"), "Error message should explain the conflict")
+            } else {
+                XCTFail("Expected conflictingFlags error but got \(cliError)")
+            }
+        }
+    }
+
+    func testParseCompressCommand_FastFlagWithAllOptions() throws {
+        // Arrange
+        let args = ["swiftcompress", "c", "input.txt", "--fast", "-o", "output.lz4", "-f"]
+
+        // Act
+        let result = try sut.parse(args)
+
+        // Assert
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.compressionLevel, .fast)
+        XCTAssertEqual(result?.algorithmName, "lz4")
+        assertOutputFile(result, equals: "output.lz4")
+        XCTAssertEqual(result?.forceOverwrite, true)
+    }
+
+    func testParseCompressCommand_BestFlagWithAllOptions() throws {
+        // Arrange
+        let args = ["swiftcompress", "c", "input.txt", "--best", "-o", "output.lzma", "-f"]
+
+        // Act
+        let result = try sut.parse(args)
+
+        // Assert
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.compressionLevel, .best)
+        XCTAssertEqual(result?.algorithmName, "lzma")
+        assertOutputFile(result, equals: "output.lzma")
+        XCTAssertEqual(result?.forceOverwrite, true)
+    }
+
+    func testParseCompressCommand_LevelFlagOrderIndependent() throws {
+        // Test --fast before file
+        let args1 = ["swiftcompress", "c", "--fast", "input.txt"]
+        let result1 = try? sut.parse(args1)
+        XCTAssertEqual(result1?.compressionLevel, .fast)
+        XCTAssertEqual(result1?.algorithmName, "lz4")
+
+        // Test --fast after file
+        let args2 = ["swiftcompress", "c", "input.txt", "--fast"]
+        let result2 = try? sut.parse(args2)
+        XCTAssertEqual(result2?.compressionLevel, .fast)
+        XCTAssertEqual(result2?.algorithmName, "lz4")
+
+        // Test --best with other flags
+        let args3 = ["swiftcompress", "c", "input.txt", "-f", "--best"]
+        let result3 = try? sut.parse(args3)
+        XCTAssertEqual(result3?.compressionLevel, .best)
+        XCTAssertEqual(result3?.algorithmName, "lzma")
+    }
+
+    func testParseCompressCommand_FastFlagCombinedWithMethod() throws {
+        // When both level flag and method are provided, method should take precedence
+        // but level should still be set for buffer size optimization
+        let args = ["swiftcompress", "c", "input.txt", "--fast", "-m", "lzfse"]
+
+        let result = try sut.parse(args)
+
+        XCTAssertEqual(result?.compressionLevel, .fast, "Compression level should be fast")
+        XCTAssertEqual(result?.algorithmName, "lzfse", "Should use explicit method")
+    }
+
+    func testParseCompressCommand_BestFlagCombinedWithMethod() throws {
+        // When both level flag and method are provided, method should take precedence
+        // but level should still be set for buffer size optimization
+        let args = ["swiftcompress", "c", "input.txt", "--best", "-m", "lz4"]
+
+        let result = try sut.parse(args)
+
+        XCTAssertEqual(result?.compressionLevel, .best, "Compression level should be best")
+        XCTAssertEqual(result?.algorithmName, "lz4", "Should use explicit method")
+    }
+
+    func testParseCompressCommand_BackwardCompatibility_NoLevelFlags() throws {
+        // Existing commands without level flags should still work with default balanced level
+        let args = ["swiftcompress", "c", "input.txt", "-m", "lzfse", "-o", "output.lzfse"]
+
+        let result = try sut.parse(args)
+
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.compressionLevel, .balanced, "Should default to balanced")
+        XCTAssertEqual(result?.algorithmName, "lzfse", "Should use explicit algorithm")
+    }
+
+    func testParseCompressCommand_AllLevelOptions() throws {
+        // Test all three levels explicitly
+        let testCases: [(args: [String], expectedLevel: CompressionLevel, expectedAlgorithm: String)] = [
+            (["swiftcompress", "c", "input.txt", "--fast"], .fast, "lz4"),
+            (["swiftcompress", "c", "input.txt", "--best"], .best, "lzma"),
+            (["swiftcompress", "c", "input.txt", "-m", "lzfse"], .balanced, "lzfse")
+        ]
+
+        for (args, expectedLevel, expectedAlgorithm) in testCases {
+            let result = try sut.parse(args)
+            XCTAssertEqual(result?.compressionLevel, expectedLevel,
+                          "Failed for args: \(args)")
+            XCTAssertEqual(result?.algorithmName, expectedAlgorithm,
+                          "Failed for args: \(args)")
+        }
+    }
+
+    func testParseCompressCommand_ConflictingLevelFlags_WithMethod_ThrowsError() {
+        // Even with explicit method, conflicting level flags should still be an error
+        let args = ["swiftcompress", "c", "input.txt", "--fast", "--best", "-m", "zlib"]
+
+        XCTAssertThrowsError(try sut.parse(args)) { error in
+            guard let cliError = error as? CLIError else {
+                XCTFail("Expected CLIError but got \(type(of: error))")
+                return
+            }
+
+            if case .conflictingFlags = cliError {
+                // Expected
+            } else {
+                XCTFail("Expected conflictingFlags error but got \(cliError)")
+            }
+        }
     }
 }

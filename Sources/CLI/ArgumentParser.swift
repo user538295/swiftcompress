@@ -53,9 +53,9 @@ extension SwiftCompressCLI {
 
         @Option(
             name: .shortAndLong,
-            help: "Compression algorithm: lzfse, lz4, zlib, or lzma"
+            help: "Compression algorithm: lzfse, lz4, zlib, or lzma (optional if --fast or --best specified)"
         )
-        var method: String
+        var method: String?  // Changed to optional to allow level flags
 
         @Option(
             name: .shortAndLong,
@@ -69,6 +69,18 @@ extension SwiftCompressCLI {
         )
         var force: Bool = false
 
+        @Flag(
+            name: .long,
+            help: "Fast compression (uses LZ4, prioritizes speed)"
+        )
+        var fast: Bool = false
+
+        @Flag(
+            name: .long,
+            help: "Best compression (uses LZMA, prioritizes compression ratio)"
+        )
+        var best: Bool = false
+
         func run() throws {
             // Execution is handled by main.swift via CLIArgumentParser
             // This method is required by ParsableCommand but not used directly
@@ -76,7 +88,25 @@ extension SwiftCompressCLI {
 
         /// Convert to ParsedCommand for domain layer
         func toParsedCommand() throws -> ParsedCommand {
-            // 1. Determine input source
+            // 1. Validate mutually exclusive compression level flags
+            if fast && best {
+                throw CLIError.conflictingFlags(
+                    flags: ["--fast", "--best"],
+                    message: "Cannot specify both --fast and --best. Choose one or neither (defaults to balanced)."
+                )
+            }
+
+            // 2. Determine compression level
+            let compressionLevel: CompressionLevel
+            if fast {
+                compressionLevel = .fast
+            } else if best {
+                compressionLevel = .best
+            } else {
+                compressionLevel = .balanced
+            }
+
+            // 3. Determine input source
             let inputSource: InputSource
             if let file = inputFile, !file.isEmpty {
                 inputSource = .file(path: file)
@@ -88,7 +118,7 @@ extension SwiftCompressCLI {
                 )
             }
 
-            // 2. Determine output destination
+            // 4. Determine output destination
             let outputDest: OutputDestination?
             if let out = output {
                 outputDest = .file(path: out)
@@ -98,24 +128,34 @@ extension SwiftCompressCLI {
                 outputDest = nil  // Will use default path resolution
             }
 
-            // 3. Validate algorithm name
-            let supportedAlgorithms = ["lzfse", "lz4", "zlib", "lzma"]
-            let normalizedMethod = method.lowercased()
+            // 5. Determine algorithm name
+            // If method is not provided, use recommended algorithm from compression level
+            let algorithmName: String
+            if let method = method {
+                // Validate explicit algorithm name
+                let supportedAlgorithms = ["lzfse", "lz4", "zlib", "lzma"]
+                let normalizedMethod = method.lowercased()
 
-            guard supportedAlgorithms.contains(normalizedMethod) else {
-                throw CLIError.invalidFlagValue(
-                    flag: "-m/--method",
-                    value: method,
-                    expected: "lzfse, lz4, zlib, or lzma"
-                )
+                guard supportedAlgorithms.contains(normalizedMethod) else {
+                    throw CLIError.invalidFlagValue(
+                        flag: "-m/--method",
+                        value: method,
+                        expected: "lzfse, lz4, zlib, or lzma"
+                    )
+                }
+                algorithmName = normalizedMethod
+            } else {
+                // Use recommended algorithm from compression level
+                algorithmName = compressionLevel.recommendedAlgorithm()
             }
 
             return ParsedCommand(
                 commandType: .compress,
                 inputSource: inputSource,
-                algorithmName: normalizedMethod,
+                algorithmName: algorithmName,
                 outputDestination: outputDest,
-                forceOverwrite: force
+                forceOverwrite: force,
+                compressionLevel: compressionLevel
             )
         }
     }

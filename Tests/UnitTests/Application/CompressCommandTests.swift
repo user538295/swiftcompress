@@ -795,9 +795,11 @@ private class CompressMockFileHandler: FileHandlerProtocol {
 
 private class CompressMockAlgorithm: CompressionAlgorithmProtocol {
     let name: String
+    let supportsCustomLevels = false
     var compressStreamCalled = false
     var compressStreamError: Error?
     var lastBufferSize: Int?
+    var lastCompressionLevel: CompressionLevel?
 
     init(name: String) {
         self.name = name
@@ -811,9 +813,10 @@ private class CompressMockAlgorithm: CompressionAlgorithmProtocol {
         return input
     }
 
-    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int) throws {
+    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int, compressionLevel: CompressionLevel = .balanced) throws {
         compressStreamCalled = true
         lastBufferSize = bufferSize
+        lastCompressionLevel = compressionLevel
 
         if let error = compressStreamError {
             throw error

@@ -98,6 +98,7 @@ final class CommandRouter: CommandRouterProtocol {
             algorithmName: algorithmName,
             outputDestination: command.outputDestination,
             forceOverwrite: command.forceOverwrite,
+            compressionLevel: command.compressionLevel,
             fileHandler: fileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,

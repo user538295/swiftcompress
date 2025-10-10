@@ -727,6 +727,7 @@ class MockFileHandler: FileHandlerProtocol {
 
 class MockAlgorithm: CompressionAlgorithmProtocol {
     let name: String
+    let supportsCustomLevels = false
 
     init(name: String) {
         self.name = name
@@ -740,7 +741,7 @@ class MockAlgorithm: CompressionAlgorithmProtocol {
         return input  // Pass-through for testing
     }
 
-    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int) throws {
+    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int, compressionLevel: CompressionLevel = .balanced) throws {
         // Simulate stream processing
         var buffer = [UInt8](repeating: 0, count: bufferSize)
         while input.hasBytesAvailable {

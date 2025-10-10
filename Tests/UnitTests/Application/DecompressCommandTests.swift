@@ -816,6 +816,7 @@ private class DecompressMockFileHandler: FileHandlerProtocol {
 
 private class DecompressMockAlgorithm: CompressionAlgorithmProtocol {
     let name: String
+    let supportsCustomLevels = false
     var decompressStreamError: Error?
 
     init(name: String) {
@@ -830,7 +831,7 @@ private class DecompressMockAlgorithm: CompressionAlgorithmProtocol {
         return input
     }
 
-    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int) throws {
+    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int, compressionLevel: CompressionLevel = .balanced) throws {
         // Not used in decompress tests
     }
 

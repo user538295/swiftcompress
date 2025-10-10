@@ -8,6 +8,7 @@ struct ParsedCommand: Equatable {
     let algorithmName: String?              // Optional for decompression (can be inferred)
     let outputDestination: OutputDestination?  // Changed from outputPath
     let forceOverwrite: Bool
+    let compressionLevel: CompressionLevel  // Compression level for tuning behavior
 
     /// Standard initializer for ParsedCommand
     init(
@@ -15,12 +16,14 @@ struct ParsedCommand: Equatable {
         inputSource: InputSource,
         algorithmName: String? = nil,
         outputDestination: OutputDestination? = nil,
-        forceOverwrite: Bool = false
+        forceOverwrite: Bool = false,
+        compressionLevel: CompressionLevel = .balanced
     ) {
         self.commandType = commandType
         self.inputSource = inputSource
         self.algorithmName = algorithmName
         self.outputDestination = outputDestination
         self.forceOverwrite = forceOverwrite
+        self.compressionLevel = compressionLevel
     }
 }
