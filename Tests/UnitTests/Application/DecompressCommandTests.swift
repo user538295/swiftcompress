@@ -338,10 +338,12 @@ final class DecompressCommandTests: XCTestCase {
         // Act & Assert
         XCTAssertThrowsError(try command.execute()) { error in
             XCTAssertTrue(error is DomainError)
-            if case DomainError.missingRequiredArgument(let arg) = error {
-                XCTAssertTrue(arg.contains("algorithm"))
+            if case DomainError.algorithmCannotBeInferred(let path, let ext, let supported) = error {
+                XCTAssertEqual(path, inputPath)
+                XCTAssertEqual(ext, "unknown")
+                XCTAssertTrue(supported.contains("lzfse"))  // Registry has lzfse registered
             } else {
-                XCTFail("Expected missingRequiredArgument error")
+                XCTFail("Expected algorithmCannotBeInferred error")
             }
         }
     }

@@ -21,6 +21,7 @@ enum DomainError: SwiftCompressError {
     // Validation Errors
     case missingRequiredArgument(argumentName: String)
     case invalidFlagCombination(flags: [String], reason: String)
+    case algorithmCannotBeInferred(path: String, extension: String?, supportedExtensions: [String])
 
     var description: String {
         switch self {
@@ -46,6 +47,19 @@ enum DomainError: SwiftCompressError {
             return "Missing required argument: \(argumentName)"
         case .invalidFlagCombination(let flags, let reason):
             return "Invalid flag combination [\(flags.joined(separator: ", "))]: \(reason)"
+        case .algorithmCannotBeInferred(let path, let fileExtension, let supportedExtensions):
+            var message = "Cannot infer compression algorithm for file: \(path)\n"
+
+            if let ext = fileExtension, !ext.isEmpty {
+                message += "File extension '.\(ext)' is not recognized.\n"
+            } else {
+                message += "File has no extension.\n"
+            }
+
+            message += "Supported extensions: \(supportedExtensions.map { ".\($0)" }.joined(separator: ", "))\n"
+            message += "Please specify the algorithm explicitly using: -m <algorithm>"
+
+            return message
         }
     }
 
@@ -62,6 +76,7 @@ enum DomainError: SwiftCompressError {
         case .fileTooLarge: return "DOMAIN-022"
         case .missingRequiredArgument: return "DOMAIN-030"
         case .invalidFlagCombination: return "DOMAIN-031"
+        case .algorithmCannotBeInferred: return "DOMAIN-032"
         }
     }
 

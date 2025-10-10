@@ -74,3 +74,19 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+## swiftcompress specific
+# Debug scripts
+debug_*.swift
+
+# Test data files
+*.bin
+test_*mb.*
+test_*gb.*
+*_decompressed.*
+
+# Compressed test outputs
+*.lzfse
+*.lz4
+*.zlib
+*.lzma

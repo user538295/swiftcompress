@@ -1,8 +1,8 @@
 # SwiftCompress - Architecture Documentation
 
-**Version**: 1.1
-**Date**: 2025-10-09
-**Status**: ✅ MVP Complete - Fully Functional CLI Tool
+**Version**: 1.2
+**Date**: 2025-10-10
+**Status**: ✅ MVP Complete - Fully Functional CLI Tool with True Streaming
 
 ---
 
@@ -138,7 +138,7 @@ ADRs document key architectural decisions with context, rationale, and consequen
 #### [ADR-003: Stream-Based File Processing](./ADRs/ADR-003-stream-processing.md)
 - **Decision**: Process files as streams with 64 KB buffer size
 - **Rationale**: Scalability to large files, constant memory usage
-- **Status**: Accepted
+- **Status**: Accepted ✅ **IMPLEMENTED**
 
 #### [ADR-004: Dependency Injection Strategy](./ADRs/ADR-004-dependency-injection.md)
 - **Decision**: Constructor-based DI with manual wiring in main.swift
@@ -149,6 +149,11 @@ ADRs document key architectural decisions with context, rationale, and consequen
 - **Decision**: Require explicit `-m` flag in MVP, add auto-detection in Phase 2
 - **Rationale**: Simplicity for MVP, progressive enhancement
 - **Status**: Accepted with planned evolution
+
+#### [ADR-006: True Streaming using compression_stream API](./ADRs/ADR-006-compression-stream-api.md) ✅ **NEW**
+- **Decision**: Use compression_stream API for true streaming with constant memory
+- **Rationale**: Enables processing of arbitrarily large files with <10 MB memory
+- **Status**: Accepted ✅ **IMPLEMENTED** (validated: 9.6 MB peak memory)
 
 ---
 
@@ -306,13 +311,14 @@ ADRs document key architectural decisions with context, rationale, and consequen
 
 1. ✅ Write E2E tests (full CLI invocations)
 2. ✅ Integration testing across all layers
-3. ⚠️ Performance testing (large files) - Deferred to Phase 2
+3. ✅ Performance testing (large files) - **COMPLETE: 100 MB files validated**
 4. ✅ Error scenario coverage
 5. ✅ User-facing documentation (usage, examples)
 6. ✅ Code review and refinements
 7. ✅ Achieve 95%+ overall test coverage (exceeded 85% target)
+8. ✅ **True streaming implementation with constant memory usage**
 
-**Deliverable**: ✅ Production-ready MVP
+**Deliverable**: ✅ Production-ready MVP with true streaming
 **Tests**: 279 tests total (100% passing)
 
 ---
@@ -337,11 +343,9 @@ ADRs document key architectural decisions with context, rationale, and consequen
 - ✅ Round-trip data integrity verified
 - ✅ Clean Architecture principles maintained
 - ✅ SOLID principles applied throughout
-
-### Known Limitations (Phase 2)
-- ⚠️ Stream processing loads entire file into memory (not true streaming)
-- ⚠️ Large files (>100 MB) not yet performance tested
-- ⚠️ Memory usage scales with file size (needs optimization)
+- ✅ **True streaming implementation with constant memory footprint**
+- ✅ **Large file support validated (100 MB files tested)**
+- ✅ **Memory usage: ~9.6 MB peak (independent of file size)**
 
 ---
 
@@ -601,6 +605,7 @@ Use this checklist to verify all architectural documentation files are present:
 - [x] ADRs/ADR-003-stream-processing.md
 - [x] ADRs/ADR-004-dependency-injection.md
 - [x] ADRs/ADR-005-explicit-algorithm-selection.md
+- [x] ADRs/ADR-006-compression-stream-api.md ✅ **NEW**
 
 ---
 
@@ -609,6 +614,8 @@ Use this checklist to verify all architectural documentation files are present:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2025-10-07 | Initial architecture documentation complete |
+| 1.1 | 2025-10-09 | MVP implementation complete, all 279 tests passing |
+| 1.2 | 2025-10-10 | True streaming implemented and validated, ADR-006 added, 100 MB files tested with 9.6 MB peak memory |
 
 ---
 

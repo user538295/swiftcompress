@@ -142,6 +142,20 @@ final class ErrorHandler: ErrorHandlerProtocol {
 
         case .invalidFlagCombination(let flags, let reason):
             message = "Error: Invalid flag combination [\(flags.joined(separator: ", "))]: \(reason)"
+
+        case .algorithmCannotBeInferred(let path, let fileExtension, let supportedExtensions):
+            var errorMessage = "Error: Cannot infer compression algorithm for file: \(path)\n"
+
+            if let ext = fileExtension, !ext.isEmpty {
+                errorMessage += "File extension '.\(ext)' is not recognized.\n"
+            } else {
+                errorMessage += "File has no extension.\n"
+            }
+
+            errorMessage += "Supported extensions: \(supportedExtensions.map { ".\($0)" }.joined(separator: ", "))\n"
+            errorMessage += "Please specify the algorithm explicitly using: -m <algorithm>"
+
+            message = errorMessage
         }
 
         return UserFacingError(message: message, exitCode: 1, shouldPrintStackTrace: false)

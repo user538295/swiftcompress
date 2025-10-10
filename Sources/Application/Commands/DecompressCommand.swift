@@ -144,8 +144,15 @@ final class DecompressCommand: Command {
 
         // Otherwise, try to infer from file extension
         guard let inferredAlgorithm = pathResolver.inferAlgorithm(from: inputPath) else {
-            throw DomainError.missingRequiredArgument(
-                argumentName: "-m (algorithm)"
+            // Extract file extension for better error message
+            let url = URL(fileURLWithPath: inputPath)
+            let fileExtension = url.pathExtension
+            let supportedExtensions = algorithmRegistry.supportedAlgorithms
+
+            throw DomainError.algorithmCannotBeInferred(
+                path: inputPath,
+                extension: fileExtension.isEmpty ? nil : fileExtension,
+                supportedExtensions: supportedExtensions
             )
         }
 

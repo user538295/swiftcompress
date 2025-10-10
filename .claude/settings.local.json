@@ -23,7 +23,16 @@
       "Bash(swift run swiftcompress:*)",
       "Bash(timeout 10 swift run swiftcompress:*)",
       "Bash(.build/debug/swiftcompress:*)",
-      "Bash(echo \"Exit code: $?\")"
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(swift --version)",
+      "Bash(/Users/gergelymancz/Documents/Development/swiftcompress/debug_streaming.swift)",
+      "Read(//tmp/**)",
+      "Bash(echo:*)",
+      "Bash(diff:*)",
+      "Bash(time .build/debug/swiftcompress:*)",
+      "Bash(swift:*)",
+      "Bash(dd:*)",
+      "Bash(/usr/bin/time:*)"
     ],
     "deny": [],
     "ask": []
