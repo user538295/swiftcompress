@@ -67,24 +67,26 @@ swiftcompress c myfile.txt -m zlib -f
 ### Compress
 
 ```bash
-swiftcompress c <input> -m <algorithm> [-o <output>] [-f]
+swiftcompress c <input> -m <algorithm> [-o <output>] [-f] [--progress]
 ```
 
 **Options:**
 - `-m <algorithm>`: Compression algorithm (required): `lzfse`, `lz4`, `zlib`, `lzma`
 - `-o <output>`: Output file path (optional, defaults to `<input>.<algorithm>`)
 - `-f`: Force overwrite if output file exists
+- `--progress`: Show progress indicator during compression (opt-in)
 
 ### Decompress
 
 ```bash
-swiftcompress x <input> [-m <algorithm>] [-o <output>] [-f]
+swiftcompress x <input> [-m <algorithm>] [-o <output>] [-f] [--progress]
 ```
 
 **Options:**
 - `-m <algorithm>`: Compression algorithm (optional for file inputs, inferred from extension; required for stdin): `lzfse`, `lz4`, `zlib`, `lzma`
 - `-o <output>`: Output file path (optional, defaults to input without extension)
 - `-f`: Force overwrite if output file exists
+- `--progress`: Show progress indicator during decompression (opt-in)
 
 ## Examples
 
@@ -146,6 +148,34 @@ tail -f app.log | swiftcompress c -m lz4 > app.log.lz4
 - When writing to stdout, output is automatically piped
 - File integrity is maintained in all pipeline scenarios
 - Memory usage remains constant (~10 MB) regardless of data size
+
+### Progress Indicators
+
+SwiftCompress supports optional progress indicators for interactive use (requires `--progress` flag):
+
+```bash
+# Show progress during compression
+swiftcompress c large-file.bin -m lzfse --progress
+# Output to stderr: Compressing large-file.bin: [=====>     ] 45% 5.2 MB/s ETA 00:03
+
+# Show progress during decompression
+swiftcompress x compressed.lzfse -m lzfse --progress
+# Output to stderr: Decompressing compressed.lzfse: [=========> ] 87% 12.1 MB/s ETA 00:01
+
+# Progress works with file redirection (progress to stderr, data to file)
+swiftcompress c data.txt -m lzfse --progress > output.lzfse
+# Shows progress on terminal while data goes to file
+
+# Progress in pipelines (visible on terminal, data flows through pipe)
+swiftcompress c data.txt -m lzfse --progress | ssh remote "cat > file.lzfse"
+```
+
+**Progress Notes:**
+- Progress is opt-in via `--progress` flag (quiet by default)
+- Progress output goes to stderr (doesn't interfere with data on stdout)
+- Shows percentage, speed, and ETA for files
+- For stdin, shows speed and bytes processed (size unknown)
+- Automatically disabled when output goes to stdout (to avoid corrupting piped data)
 
 ## Requirements
 
@@ -233,12 +263,16 @@ swiftcompress/
 - [ADR-003: Stream Processing](Documentation/ADRs/ADR-003-stream-processing.md)
 - [ADR-004: Dependency Injection](Documentation/ADRs/ADR-004-dependency-injection.md)
 - [ADR-005: Explicit Algorithm Selection](Documentation/ADRs/ADR-005-explicit-algorithm-selection.md)
+- [ADR-006: Compression Stream API](Documentation/ADRs/ADR-006-compression-stream-api.md)
+- [ADR-007: stdin/stdout Streaming](Documentation/ADRs/ADR-007-stdin-stdout-streaming.md)
+- [ADR-008: Compression Level Flags](Documentation/ADRs/ADR-008-compression-level-flags.md)
+- [ADR-009: Progress Indicator Support](Documentation/ADRs/ADR-009-progress-indicator-support.md)
 
 ## Project Status & Roadmap
 
-**Current Version**: 1.0.0 (Production Ready)
-**Status**: ✅ Production-ready CLI tool with full Unix pipeline support
-**Test Coverage**: 95%+ (328/328 tests passing)
+**Current Version**: 1.2.0 (Production Ready)
+**Status**: ✅ Production-ready CLI tool with progress indicators
+**Test Coverage**: 95%+ (390/390 tests passing)
 
 ### Recent Milestones
 
@@ -246,7 +280,7 @@ swiftcompress/
 - ✅ **Phase 1**: MVP Implementation - All 4 layers, 4 algorithms (Complete)
 - ✅ **Phase 2**: Usability Improvements - True streaming, help system, error messages (Complete)
 - ✅ **Phase 3**: stdin/stdout Streaming - Full Unix pipeline support (Complete)
-- 🚀 **Phase 4**: Advanced Features - Compression levels, progress indicators (Planned)
+- ✅ **Phase 4**: Advanced Features - Compression levels ✅, Progress indicators ✅ (Complete)
 
 **For detailed development roadmap, milestones, and task tracking, see [ROADMAP.md](ROADMAP.md)**
 
@@ -286,7 +320,7 @@ swift test --enable-code-coverage
 swift test --filter CompressCommandTests
 ```
 
-The project maintains **95%+ test coverage** across all layers with comprehensive unit, integration, and E2E tests. Currently **328 tests passing** with 0 failures.
+The project maintains **95%+ test coverage** across all layers with comprehensive unit, integration, and E2E tests. Currently **390 tests passing** with 0 failures.
 
 ## Performance
 
@@ -336,9 +370,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Status
 
-**Current Version**: 1.0.0 (Production Ready)
-**Status**: ✅ Production-ready CLI tool with full Unix pipeline support
-**Test Coverage**: 95%+ (328/328 tests passing)
+**Current Version**: 1.2.0 (Production Ready)
+**Status**: ✅ Production-ready CLI tool with progress indicators
+**Test Coverage**: 95%+ (390/390 tests passing)
 **Last Updated**: October 2025
 
 ### Production Features
@@ -346,6 +380,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ Complete CLI interface with ArgumentParser
 - ✅ Full compress/decompress workflows
 - ✅ **Unix pipeline support (stdin/stdout streaming)**
+- ✅ **Progress indicators (opt-in with --progress flag)**
+- ✅ **Compression level flags (--fast, --best)**
 - ✅ Comprehensive error handling
 - ✅ 95%+ test coverage across all layers
 - ✅ Clean Architecture fully implemented

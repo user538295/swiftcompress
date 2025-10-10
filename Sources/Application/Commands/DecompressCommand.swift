@@ -10,12 +10,14 @@ final class DecompressCommand: Command {
     let algorithmName: String?  // Optional for file input: can be inferred from extension
     let outputDestination: OutputDestination?  // Optional: defaults based on input source
     let forceOverwrite: Bool
+    let progressEnabled: Bool
 
     // Injected dependencies
     private let fileHandler: FileHandlerProtocol
     private let pathResolver: FilePathResolver
     private let validationRules: ValidationRules
     private let algorithmRegistry: AlgorithmRegistry
+    private let progressCoordinator: ProgressCoordinator
 
     // MARK: - Initialization
 
@@ -24,19 +26,23 @@ final class DecompressCommand: Command {
         algorithmName: String? = nil,
         outputDestination: OutputDestination? = nil,
         forceOverwrite: Bool = false,
+        progressEnabled: Bool = false,
         fileHandler: FileHandlerProtocol,
         pathResolver: FilePathResolver,
         validationRules: ValidationRules,
-        algorithmRegistry: AlgorithmRegistry
+        algorithmRegistry: AlgorithmRegistry,
+        progressCoordinator: ProgressCoordinator = ProgressCoordinator()
     ) {
         self.inputSource = inputSource
         self.algorithmName = algorithmName
         self.outputDestination = outputDestination
         self.forceOverwrite = forceOverwrite
+        self.progressEnabled = progressEnabled
         self.fileHandler = fileHandler
         self.pathResolver = pathResolver
         self.validationRules = validationRules
         self.algorithmRegistry = algorithmRegistry
+        self.progressCoordinator = progressCoordinator
     }
 
     // MARK: - Execution
@@ -106,11 +112,38 @@ final class DecompressCommand: Command {
                 }
             }
 
-            // Step 7: Create input and output streams
-            let inputStream = try fileHandler.inputStream(from: inputSource)
+            // Step 7: Setup progress tracking
+            // Get file size for progress tracking (0 if stdin or unknown)
+            let totalBytes: Int64
+            if case .file(let path) = inputSource {
+                totalBytes = (try? fileHandler.fileSize(at: path)) ?? 0
+            } else {
+                totalBytes = 0  // stdin - unknown size
+            }
+
+            // Create progress reporter
+            let progressReporter = progressCoordinator.createReporter(
+                progressEnabled: progressEnabled,
+                outputDestination: resolvedOutputDestination
+            )
+
+            // Set operation description
+            let operationDescription = "Decompressing \(inputSource.description)"
+            progressReporter.setDescription(operationDescription)
+
+            // Step 8: Create input and output streams
+            let rawInputStream = try fileHandler.inputStream(from: inputSource)
+
+            // Wrap with progress tracking
+            let inputStream = progressCoordinator.wrapInputStream(
+                rawInputStream,
+                totalBytes: totalBytes,
+                reporter: progressReporter
+            )
+
             let outputStream = try fileHandler.outputStream(to: resolvedOutputDestination)
 
-            // Step 8: Execute decompression with cleanup
+            // Step 9: Execute decompression with cleanup
             var decompressionSucceeded = false
             defer {
                 // Cleanup partial output on failure (only for file outputs)
@@ -119,6 +152,9 @@ final class DecompressCommand: Command {
                         try? fileHandler.deleteFile(at: outputPath)
                     }
                 }
+
+                // Clear progress indicator on exit (success or failure)
+                progressReporter.complete()
             }
 
             try algorithm.decompressStream(

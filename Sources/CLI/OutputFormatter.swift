@@ -38,7 +38,7 @@ final class OutputFormatter: OutputFormatterProtocol {
 
     // MARK: - Constants
 
-    private let version = "0.1.0"
+    private let version = "1.2.0"
     private let supportedAlgorithms = ["lzfse", "lz4", "zlib", "lzma"]
 
     // MARK: - Public Interface
@@ -90,6 +90,7 @@ final class OutputFormatter: OutputFormatterProtocol {
         OPTIONAL FLAGS:
             -o <output>      Output file path (default: input + algorithm extension)
             -f, --force      Force overwrite if output file exists
+            --progress       Show progress indicator during compression/decompression
             --help           Show this help message
             --version        Show version information
 
@@ -113,6 +114,10 @@ final class OutputFormatter: OutputFormatterProtocol {
 
             Force overwrite existing output:
                 swiftcompress c file.txt -m zlib -f
+
+            Show progress for large files:
+                swiftcompress c largefile.bin -m lzfse --progress
+                Output: [=====>     ] 45% 5.2 MB/s ETA 00:03
 
         EXIT CODES:
             0    Success

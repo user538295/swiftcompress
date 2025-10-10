@@ -9,6 +9,7 @@ struct ParsedCommand: Equatable {
     let outputDestination: OutputDestination?  // Changed from outputPath
     let forceOverwrite: Bool
     let compressionLevel: CompressionLevel  // Compression level for tuning behavior
+    let progressEnabled: Bool               // Whether to show progress indicator
 
     /// Standard initializer for ParsedCommand
     init(
@@ -17,7 +18,8 @@ struct ParsedCommand: Equatable {
         algorithmName: String? = nil,
         outputDestination: OutputDestination? = nil,
         forceOverwrite: Bool = false,
-        compressionLevel: CompressionLevel = .balanced
+        compressionLevel: CompressionLevel = .balanced,
+        progressEnabled: Bool = false
     ) {
         self.commandType = commandType
         self.inputSource = inputSource
@@ -25,5 +27,6 @@ struct ParsedCommand: Equatable {
         self.outputDestination = outputDestination
         self.forceOverwrite = forceOverwrite
         self.compressionLevel = compressionLevel
+        self.progressEnabled = progressEnabled
     }
 }

@@ -81,6 +81,12 @@ extension SwiftCompressCLI {
         )
         var best: Bool = false
 
+        @Flag(
+            name: .long,
+            help: "Show progress indicator during compression"
+        )
+        var progress: Bool = false
+
         func run() throws {
             // Execution is handled by main.swift via CLIArgumentParser
             // This method is required by ParsableCommand but not used directly
@@ -155,7 +161,8 @@ extension SwiftCompressCLI {
                 algorithmName: algorithmName,
                 outputDestination: outputDest,
                 forceOverwrite: force,
-                compressionLevel: compressionLevel
+                compressionLevel: compressionLevel,
+                progressEnabled: progress
             )
         }
     }
@@ -206,6 +213,12 @@ extension SwiftCompressCLI {
             help: "Force overwrite if output file exists"
         )
         var force: Bool = false
+
+        @Flag(
+            name: .long,
+            help: "Show progress indicator during decompression"
+        )
+        var progress: Bool = false
 
         func run() throws {
             // Execution is handled by main.swift via CLIArgumentParser
@@ -266,7 +279,8 @@ extension SwiftCompressCLI {
                 inputSource: inputSource,
                 algorithmName: normalizedMethod,
                 outputDestination: outputDest,
-                forceOverwrite: force
+                forceOverwrite: force,
+                progressEnabled: progress
             )
         }
     }

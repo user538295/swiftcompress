@@ -11,12 +11,14 @@ final class CompressCommand: Command {
     let outputDestination: OutputDestination?
     let forceOverwrite: Bool
     let compressionLevel: CompressionLevel
+    let progressEnabled: Bool
 
     // Injected dependencies
     private let fileHandler: FileHandlerProtocol
     private let pathResolver: FilePathResolver
     private let validationRules: ValidationRules
     private let algorithmRegistry: AlgorithmRegistry
+    private let progressCoordinator: ProgressCoordinator
 
     // MARK: - Initialization
 
@@ -27,30 +29,36 @@ final class CompressCommand: Command {
     ///   - outputDestination: Optional output destination (defaults based on input source)
     ///   - forceOverwrite: Whether to overwrite existing output file
     ///   - compressionLevel: Compression level (fast, balanced, best)
+    ///   - progressEnabled: Whether to show progress indicator
     ///   - fileHandler: File system operations handler
     ///   - pathResolver: Path resolution service
     ///   - validationRules: Business validation rules
     ///   - algorithmRegistry: Algorithm registry for lookup
+    ///   - progressCoordinator: Progress coordination service
     init(
         inputSource: InputSource,
         algorithmName: String,
         outputDestination: OutputDestination? = nil,
         forceOverwrite: Bool = false,
         compressionLevel: CompressionLevel = .balanced,
+        progressEnabled: Bool = false,
         fileHandler: FileHandlerProtocol,
         pathResolver: FilePathResolver,
         validationRules: ValidationRules,
-        algorithmRegistry: AlgorithmRegistry
+        algorithmRegistry: AlgorithmRegistry,
+        progressCoordinator: ProgressCoordinator = ProgressCoordinator()
     ) {
         self.inputSource = inputSource
         self.algorithmName = algorithmName
         self.outputDestination = outputDestination
         self.forceOverwrite = forceOverwrite
         self.compressionLevel = compressionLevel
+        self.progressEnabled = progressEnabled
         self.fileHandler = fileHandler
         self.pathResolver = pathResolver
         self.validationRules = validationRules
         self.algorithmRegistry = algorithmRegistry
+        self.progressCoordinator = progressCoordinator
     }
 
     // MARK: - Execution
@@ -112,8 +120,34 @@ final class CompressCommand: Command {
             throw DomainError.algorithmNotRegistered(name: algorithmName)
         }
 
-        // Step 6: Create input stream
-        let inputStream = try fileHandler.inputStream(from: inputSource)
+        // Step 6: Setup progress tracking
+        // Get file size for progress tracking (0 if stdin or unknown)
+        let totalBytes: Int64
+        if case .file(let path) = inputSource {
+            totalBytes = (try? fileHandler.fileSize(at: path)) ?? 0
+        } else {
+            totalBytes = 0  // stdin - unknown size
+        }
+
+        // Create progress reporter
+        let progressReporter = progressCoordinator.createReporter(
+            progressEnabled: progressEnabled,
+            outputDestination: resolvedOutputDestination
+        )
+
+        // Set operation description
+        let operationDescription = "Compressing \(inputSource.description)"
+        progressReporter.setDescription(operationDescription)
+
+        // Step 7: Create input stream
+        let rawInputStream = try fileHandler.inputStream(from: inputSource)
+
+        // Wrap with progress tracking
+        let inputStream = progressCoordinator.wrapInputStream(
+            rawInputStream,
+            totalBytes: totalBytes,
+            reporter: progressReporter
+        )
 
         // Ensure streams are closed on exit
         var outputStreamCreated = false
@@ -128,9 +162,12 @@ final class CompressCommand: Command {
                     try? fileHandler.deleteFile(at: outputPath)
                 }
             }
+
+            // Clear progress indicator on exit (success or failure)
+            progressReporter.complete()
         }
 
-        // Step 7: Create output stream
+        // Step 8: Create output stream
         let outputStream = try fileHandler.outputStream(to: resolvedOutputDestination)
         outputStreamCreated = true
 
@@ -138,7 +175,7 @@ final class CompressCommand: Command {
             outputStream.close()
         }
 
-        // Step 8: Execute compression
+        // Step 9: Execute compression
         // Use buffer size from compression level for optimal performance
         let bufferSize = compressionLevel.bufferSize
         try algorithm.compressStream(
