@@ -1,8 +1,8 @@
 # SwiftCompress - Architecture Documentation
 
-**Version**: 1.2
+**Version**: 1.3
 **Date**: 2025-10-10
-**Status**: ✅ MVP Complete - Fully Functional CLI Tool with True Streaming
+**Status**: ✅ Production Ready - Fully Functional CLI Tool with True Streaming and Unix Pipeline Support
 
 ---
 
@@ -150,10 +150,15 @@ ADRs document key architectural decisions with context, rationale, and consequen
 - **Rationale**: Simplicity for MVP, progressive enhancement
 - **Status**: Accepted with planned evolution
 
-#### [ADR-006: True Streaming using compression_stream API](./ADRs/ADR-006-compression-stream-api.md) ✅ **NEW**
+#### [ADR-006: True Streaming using compression_stream API](./ADRs/ADR-006-compression-stream-api.md)
 - **Decision**: Use compression_stream API for true streaming with constant memory
 - **Rationale**: Enables processing of arbitrarily large files with <10 MB memory
 - **Status**: Accepted ✅ **IMPLEMENTED** (validated: 9.6 MB peak memory)
+
+#### [ADR-007: Unix Pipeline Support](./ADRs/ADR-007-unix-pipeline-support.md)
+- **Decision**: Add stdin/stdout streaming for Unix pipeline integration
+- **Rationale**: Enable composability with Unix tools, support streaming workflows
+- **Status**: Accepted ✅ **IMPLEMENTED**
 
 ---
 
@@ -161,7 +166,7 @@ ADRs document key architectural decisions with context, rationale, and consequen
 
 ### Project Phases
 
-#### Phase 1: MVP (Core Functionality)
+#### Phase 1: MVP (Core Functionality) ✅ **COMPLETE**
 - Compress and decompress single files
 - Four algorithms: LZFSE, LZ4, Zlib, LZMA
 - Explicit algorithm selection required (`-m` flag)
@@ -169,21 +174,29 @@ ADRs document key architectural decisions with context, rationale, and consequen
 - Basic error handling
 - Exit codes
 
-**Target**: 4 weeks
+**Target**: 4 weeks | **Status**: ✅ Complete
 
-#### Phase 2: Usability Improvements
+#### Phase 2: Usability Improvements ✅ **COMPLETE**
 - Algorithm auto-detection from file extension (decompression only)
 - Enhanced help system
 - Overwrite protection with `-f` flag
 - Improved error messages
 
-**Target**: 2 weeks
+**Target**: 2 weeks | **Status**: ✅ Complete
 
-#### Phase 3: Advanced Features
+#### Phase 3: Advanced Features ✅ **COMPLETE**
 - stdin/stdout streaming support
 - Compression level tuning
 - Progress indicators
-- Batch operations (future consideration)
+- Unix pipeline integration
+
+**Target**: TBD based on user feedback | **Status**: ✅ Complete
+
+#### Phase 4: Future Enhancements
+- Batch operations
+- Parallel compression
+- Custom compression parameters
+- Additional algorithm support
 
 **Target**: TBD based on user feedback
 
@@ -259,12 +272,12 @@ ADRs document key architectural decisions with context, rationale, and consequen
 
 ## Implementation Status
 
-**Status**: ✅ MVP COMPLETE (October 2025)
-**Version**: 0.1.0
+**Status**: ✅ PRODUCTION READY (October 2025)
+**Version**: 1.0.0
 
 ### Summary
 
-- **Total Tests**: 279 (0 failures)
+- **Total Tests**: 328 (0 failures)
 - **Test Coverage**: 95%+
 - **Source Files**: 31 files (~2,956 lines)
 - **Test Files**: 13 files (~5,918 lines)
@@ -279,6 +292,8 @@ ADRs document key architectural decisions with context, rationale, and consequen
 - ✅ **True streaming implementation with constant memory footprint**
 - ✅ **Large file support validated (100 MB files tested)**
 - ✅ **Memory usage: ~9.6 MB peak (independent of file size)**
+- ✅ **Unix pipeline support (stdin/stdout streaming)**
+- ✅ **Full Phase 3 feature set complete**
 
 **For detailed roadmap, task breakdown, weekly milestones, and future plans, see [ROADMAP.md](../ROADMAP.md)**
 
@@ -503,22 +518,22 @@ This architecture is successfully implemented when:
 
 ## Next Steps for Development
 
-### ✅ MVP Complete - Current Focus: Phase 2 Improvements
+### ✅ Production Ready - Current Focus: Phase 4 Enhancements
 
-1. **Use the CLI tool**: Build with `swift build` and test with real files
-2. **Performance optimization**: Implement true streaming for large files
-3. **Benchmarking**: Test with files >100 MB and optimize
+1. **Use the CLI tool**: Build with `swift build` and test with real files and pipelines
+2. **Batch operations**: Add support for compressing multiple files
+3. **Parallel compression**: Implement concurrent processing for multiple files
 4. **CI/CD setup**: Configure GitHub Actions for automated testing
 5. **Documentation**: Enhance user guides with more examples
-6. **Code review**: Address any technical debt from MVP sprint
+6. **Performance tuning**: Optimize compression parameters for different use cases
 
 ### For New Contributors
 
 1. **Review all documentation** (start with Architecture Overview)
 2. **Set up development environment** (see SETUP.md)
-3. **Run tests** (`swift test` - all 279 should pass)
+3. **Run tests** (`swift test` - all 328 should pass)
 4. **Try the CLI** (build and test compress/decompress workflows)
-5. **Pick a Phase 2 task** (see roadmap above)
+5. **Pick a Phase 4 task** (see roadmap above)
 6. **Follow TDD approach** (maintain 95%+ test coverage)
 
 ---
@@ -540,7 +555,8 @@ Use this checklist to verify all architectural documentation files are present:
 - [x] ADRs/ADR-003-stream-processing.md
 - [x] ADRs/ADR-004-dependency-injection.md
 - [x] ADRs/ADR-005-explicit-algorithm-selection.md
-- [x] ADRs/ADR-006-compression-stream-api.md ✅ **NEW**
+- [x] ADRs/ADR-006-compression-stream-api.md
+- [x] ADRs/ADR-007-unix-pipeline-support.md ✅ **IMPLEMENTED**
 
 ---
 
@@ -551,6 +567,7 @@ Use this checklist to verify all architectural documentation files are present:
 | 1.0 | 2025-10-07 | Initial architecture documentation complete |
 | 1.1 | 2025-10-09 | MVP implementation complete, all 279 tests passing |
 | 1.2 | 2025-10-10 | True streaming implemented and validated, ADR-006 added, 100 MB files tested with 9.6 MB peak memory |
+| 1.3 | 2025-10-10 | Version 1.0.0 released, Phase 3 complete with Unix pipeline support, ADR-007 added, 328 tests passing, production ready status |
 
 ---
 
