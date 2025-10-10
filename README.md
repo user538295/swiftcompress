@@ -196,44 +196,20 @@ swiftcompress/
 - [ADR-004: Dependency Injection](Documentation/ADRs/ADR-004-dependency-injection.md)
 - [ADR-005: Explicit Algorithm Selection](Documentation/ADRs/ADR-005-explicit-algorithm-selection.md)
 
-## Roadmap
+## Project Status & Roadmap
 
-### ✅ Phase 0: Architecture (Complete)
-- [x] Project specification and design
-- [x] Comprehensive architectural documentation
-- [x] Development environment setup
+**Current Version**: 0.1.0 (MVP Complete)
+**Status**: ✅ Fully functional CLI tool with all core features implemented
+**Test Coverage**: 95%+ (279/279 tests passing)
 
-### ✅ Phase 1: MVP Implementation (Complete)
-- [x] **Week 1**: Foundation layer (protocols, domain logic) ✅
-- [x] **Week 2**: Infrastructure layer (file I/O, algorithms) ✅
-- [x] **Week 3**: Application & CLI layers (commands, parsing) ✅
-- [x] **Week 4**: Testing, polish, documentation ✅
+### Recent Milestones
 
-**Status**: MVP Complete - All 279 tests passing, 95%+ coverage
+- ✅ **Phase 0**: Architecture & Design (Complete)
+- ✅ **Phase 1**: MVP Implementation - All 4 layers, 4 algorithms (Complete)
+- ✅ **Phase 2**: Usability Improvements - True streaming, help system, error messages (Complete)
+- 🚀 **Phase 3**: Advanced Features - stdin/stdout, compression levels (Planned)
 
-**Metrics**:
-- 31 source files (~2,956 lines)
-- 13 test files (~5,918 lines)
-- 279 tests (100% passing)
-- All 4 layers fully implemented
-- All 4 algorithms working (LZFSE, LZ4, ZLIB, LZMA)
-- End-to-end CLI workflows verified
-
-### 🔧 Phase 2: Usability Improvements (In Progress)
-- [x] True streaming implementation ✅ **COMPLETE** (validated: 9.6 MB peak memory for 100 MB files)
-- [x] Algorithm auto-detection from file extension ✅ **COMPLETE** (decompression)
-- [x] Performance testing with large files ✅ **COMPLETE** (100 MB validated)
-- [ ] Performance testing with files >1 GB
-- [ ] Enhanced help system with examples
-- [ ] Improved error messages
-- [ ] CI/CD setup (GitHub Actions)
-- [ ] Performance benchmarking and optimization
-
-### 🚀 Phase 3: Advanced Features (Future)
-- [ ] stdin/stdout streaming support
-- [ ] Compression level flags (`--fast`, `--best`)
-- [ ] Progress indicators for large files
-- [ ] Batch operation support
+**For detailed development roadmap, milestones, and task tracking, see [ROADMAP.md](ROADMAP.md)**
 
 ## Contributing
 
