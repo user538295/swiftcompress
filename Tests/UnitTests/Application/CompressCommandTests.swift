@@ -52,9 +52,9 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/tmp": true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             forceOverwrite: false,
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -89,9 +89,9 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/tmp": true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: nil,  // Use default
+            outputDestination: nil,  // Use default
             forceOverwrite: false,
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -120,9 +120,9 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/tmp": true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             forceOverwrite: true,  // Force overwrite
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -142,7 +142,7 @@ final class CompressCommandTests: XCTestCase {
     func testExecute_ThrowsError_WhenInputPathEmpty() {
         // Arrange
         let command = CompressCommand(
-            inputPath: "",  // Empty path
+            inputSource: .file(path: ""),  // Empty path
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -165,7 +165,7 @@ final class CompressCommandTests: XCTestCase {
     func testExecute_ThrowsError_WhenInputPathContainsNullByte() {
         // Arrange
         let command = CompressCommand(
-            inputPath: "/path/with\0null",
+            inputSource: .file(path: "/path/with\0null"),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -188,7 +188,7 @@ final class CompressCommandTests: XCTestCase {
         // Arrange
         // Use a relative path with .. that doesn't normalize away
         let command = CompressCommand(
-            inputPath: "../etc/passwd",
+            inputSource: .file(path: "../etc/passwd"),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -211,8 +211,14 @@ final class CompressCommandTests: XCTestCase {
 
     func testExecute_ThrowsError_WhenAlgorithmNotSupported() {
         // Arrange
+        let inputPath = "/tmp/file.txt"
+
+        // Set up mock so input validation passes, allowing algorithm validation to run
+        mockFileHandler.fileExistsResults = [inputPath: true]
+        mockFileHandler.isReadableResults = [inputPath: true]
+
         let command = CompressCommand(
-            inputPath: "/tmp/file.txt",
+            inputSource: .file(path: inputPath),
             algorithmName: "invalid_algorithm",  // Unsupported
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -222,12 +228,12 @@ final class CompressCommandTests: XCTestCase {
 
         // Act & Assert
         XCTAssertThrowsError(try command.execute()) { error in
-            XCTAssertTrue(error is DomainError)
+            XCTAssertTrue(error is DomainError, "Expected DomainError but got: \(type(of: error))")
             if case DomainError.invalidAlgorithmName(let name, let supported) = error {
                 XCTAssertEqual(name, "invalid_algorithm")
                 XCTAssertTrue(supported.contains("lzfse"))
             } else {
-                XCTFail("Expected invalidAlgorithmName error")
+                XCTFail("Expected invalidAlgorithmName error but got: \(error)")
             }
         }
     }
@@ -243,7 +249,7 @@ final class CompressCommandTests: XCTestCase {
         algorithmRegistry = AlgorithmRegistry()
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -270,7 +276,7 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/tmp": true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "LZFSE",  // Uppercase
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -291,7 +297,7 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.fileExistsResults = [inputPath: false]  // Not found
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -321,7 +327,7 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: false]  // Not readable
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -354,9 +360,9 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             forceOverwrite: false,  // No force
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -391,9 +397,9 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/readonly/output": false]  // Not writable
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -419,9 +425,9 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [path: true]
 
         let command = CompressCommand(
-            inputPath: path,
+            inputSource: .file(path: path),
             algorithmName: "lzfse",
-            outputPath: path,  // Same as input
+            outputDestination: .file(path: path),  // Same as input
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -455,7 +461,7 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.inputStreamError = InfrastructureError.streamCreationFailed(path: inputPath)
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -492,9 +498,9 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.outputStreamError = InfrastructureError.streamCreationFailed(path: outputPath)
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -529,9 +535,9 @@ final class CompressCommandTests: XCTestCase {
         )
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -573,9 +579,9 @@ final class CompressCommandTests: XCTestCase {
         )
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -603,9 +609,9 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/tmp": true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -634,7 +640,7 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/tmp": true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -662,7 +668,7 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/tmp": true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -692,7 +698,7 @@ final class CompressCommandTests: XCTestCase {
         mockFileHandler.isWritableResults = ["/tmp": true]
 
         let command = CompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -760,6 +766,28 @@ private class CompressMockFileHandler: FileHandlerProtocol {
 
     func createDirectory(at path: String) throws {
         // No-op for tests
+    }
+
+    // MARK: - stdin/stdout Support
+
+    func inputStream(from source: InputSource) throws -> InputStream {
+        switch source {
+        case .file(let path):
+            return try inputStream(at: path)
+        case .stdin:
+            // For testing, return empty stream
+            return InputStream(data: Data())
+        }
+    }
+
+    func outputStream(to destination: OutputDestination) throws -> OutputStream {
+        switch destination {
+        case .file(let path):
+            return try outputStream(at: path)
+        case .stdout:
+            // For testing, return memory stream
+            return OutputStream(toMemory: ())
+        }
     }
 }
 

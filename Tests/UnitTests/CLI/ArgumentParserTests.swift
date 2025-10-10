@@ -17,6 +17,38 @@ final class ArgumentParserTests: XCTestCase {
         super.tearDown()
     }
 
+    // MARK: - Test Helpers
+
+    /// Helper to assert inputSource is a file with expected path
+    func assertInputFile(_ result: ParsedCommand?, equals expectedPath: String, file: StaticString = #file, line: UInt = #line) {
+        guard let result = result else {
+            XCTFail("Result is nil", file: file, line: line)
+            return
+        }
+        if case .file(let path) = result.inputSource {
+            XCTAssertEqual(path, expectedPath, file: file, line: line)
+        } else {
+            XCTFail("Expected inputSource to be .file(\(expectedPath)) but got \(result.inputSource)", file: file, line: line)
+        }
+    }
+
+    /// Helper to assert outputDestination is a file with expected path
+    func assertOutputFile(_ result: ParsedCommand?, equals expectedPath: String, file: StaticString = #file, line: UInt = #line) {
+        guard let result = result else {
+            XCTFail("Result is nil", file: file, line: line)
+            return
+        }
+        guard let destination = result.outputDestination else {
+            XCTFail("outputDestination is nil", file: file, line: line)
+            return
+        }
+        if case .file(let path) = destination {
+            XCTAssertEqual(path, expectedPath, file: file, line: line)
+        } else {
+            XCTFail("Expected outputDestination to be .file(\(expectedPath)) but got \(destination)", file: file, line: line)
+        }
+    }
+
     // MARK: - Compress Command Tests
 
     func testParseCompressCommand_WithAllFlags() throws {
@@ -29,9 +61,9 @@ final class ArgumentParserTests: XCTestCase {
         // Assert
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.commandType, .compress)
-        XCTAssertEqual(result?.inputPath, "input.txt")
+        assertInputFile(result, equals: "input.txt")
         XCTAssertEqual(result?.algorithmName, "lzfse")
-        XCTAssertEqual(result?.outputPath, "output.lzfse")
+        assertOutputFile(result, equals: "output.lzfse")
         XCTAssertEqual(result?.forceOverwrite, true)
     }
 
@@ -45,9 +77,17 @@ final class ArgumentParserTests: XCTestCase {
         // Assert
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.commandType, .compress)
-        XCTAssertEqual(result?.inputPath, "input.txt")
+        assertInputFile(result, equals: "input.txt")
         XCTAssertEqual(result?.algorithmName, "lz4")
-        XCTAssertNil(result?.outputPath)
+        // In test environment, stdout is often piped (test runner), so outputDestination may be .stdout or nil
+        // Both are acceptable - just verify it's not an unexpected file path
+        if let dest = result?.outputDestination {
+            if case .stdout = dest {
+                // Expected in test environment
+            } else {
+                XCTFail("Expected outputDestination to be nil or .stdout, got: \(dest)")
+            }
+        }
         XCTAssertEqual(result?.forceOverwrite, false)
     }
 
@@ -61,9 +101,9 @@ final class ArgumentParserTests: XCTestCase {
         // Assert
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.commandType, .compress)
-        XCTAssertEqual(result?.inputPath, "input.txt")
+        assertInputFile(result, equals: "input.txt")
         XCTAssertEqual(result?.algorithmName, "zlib")
-        XCTAssertEqual(result?.outputPath, "output.zlib")
+        assertOutputFile(result, equals: "output.zlib")
         XCTAssertEqual(result?.forceOverwrite, true)
     }
 
@@ -76,7 +116,7 @@ final class ArgumentParserTests: XCTestCase {
 
         // Assert
         XCTAssertNotNil(result)
-        XCTAssertEqual(result?.inputPath, "/path/to/my file.txt")
+        assertInputFile(result, equals: "/path/to/my file.txt")
         XCTAssertEqual(result?.algorithmName, "lzma")
     }
 
@@ -104,9 +144,9 @@ final class ArgumentParserTests: XCTestCase {
         // Assert
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.commandType, .decompress)
-        XCTAssertEqual(result?.inputPath, "input.lzfse")
+        assertInputFile(result, equals: "input.lzfse")
         XCTAssertEqual(result?.algorithmName, "lzfse")
-        XCTAssertEqual(result?.outputPath, "output.txt")
+        assertOutputFile(result, equals: "output.txt")
         XCTAssertEqual(result?.forceOverwrite, true)
     }
 
@@ -120,9 +160,16 @@ final class ArgumentParserTests: XCTestCase {
         // Assert
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.commandType, .decompress)
-        XCTAssertEqual(result?.inputPath, "input.lz4")
+        assertInputFile(result, equals: "input.lz4")
         XCTAssertEqual(result?.algorithmName, "lz4")
-        XCTAssertNil(result?.outputPath)
+        // In test environment, stdout is often piped (test runner), so outputDestination may be .stdout or nil
+        if let dest = result?.outputDestination {
+            if case .stdout = dest {
+                // Expected in test environment
+            } else {
+                XCTFail("Expected outputDestination to be nil or .stdout, got: \(dest)")
+            }
+        }
         XCTAssertEqual(result?.forceOverwrite, false)
     }
 
@@ -137,7 +184,7 @@ final class ArgumentParserTests: XCTestCase {
         XCTAssertNotNil(result)
         XCTAssertEqual(result?.commandType, .decompress)
         XCTAssertEqual(result?.algorithmName, "zlib")
-        XCTAssertEqual(result?.outputPath, "output.txt")
+        assertOutputFile(result, equals: "output.txt")
     }
 
     // MARK: - Algorithm Validation Tests
@@ -215,28 +262,33 @@ final class ArgumentParserTests: XCTestCase {
         }
     }
 
-    func testParseCompressCommand_MissingInputFile_ThrowsError() {
+    func testParseCompressCommand_MissingInputFile_HandlesBothScenarios() throws {
         // Arrange
+        // With new stdin/stdout support, missing input file triggers stdin detection
+        // Behavior depends on whether stdin is piped in test environment
         let args = ["swiftcompress", "c", "-m", "lzfse"]
 
         // Act & Assert
-        XCTAssertThrowsError(try sut.parse(args)) { error in
-            guard let cliError = error as? CLIError else {
-                XCTFail("Expected CLIError but got \(type(of: error))")
-                return
-            }
+        if TerminalDetector.isStdinPipe() {
+            // If stdin is piped, parsing should succeed with stdin as input
+            let result = try? sut.parse(args)
+            XCTAssertNotNil(result, "Should parse successfully when stdin is piped")
+        } else {
+            // If stdin is not piped, should throw error
+            XCTAssertThrowsError(try sut.parse(args)) { error in
+                guard let cliError = error as? CLIError else {
+                    XCTFail("Expected CLIError but got \(type(of: error))")
+                    return
+                }
 
-            if case .missingRequiredArgument(let name) = cliError {
-                // ArgumentParser may report this as "inputFile", "input-file", "method", or "required argument"
-                // The key is that it detected a missing required argument
-                XCTAssertTrue(name.lowercased().contains("input") ||
-                             name.lowercased().contains("file") ||
-                             name.lowercased().contains("method") ||
-                             name.lowercased().contains("required") ||
-                             name.lowercased().contains("argument"),
-                              "Expected missing required argument error, got: \(name)")
-            } else {
-                XCTFail("Expected missingRequiredArgument error but got \(cliError)")
+                if case .missingRequiredArgument(let name) = cliError {
+                    XCTAssertTrue(name.lowercased().contains("input") ||
+                                 name.lowercased().contains("file") ||
+                                 name.lowercased().contains("stdin"),
+                                  "Expected missing input error, got: \(name)")
+                } else {
+                    XCTFail("Expected missingRequiredArgument error but got \(cliError)")
+                }
             }
         }
     }
@@ -266,21 +318,33 @@ final class ArgumentParserTests: XCTestCase {
         }
     }
 
-    func testParseDecompressCommand_MissingInputFile_ThrowsError() {
+    func testParseDecompressCommand_MissingInputFile_HandlesBothScenarios() throws {
         // Arrange
+        // With new stdin/stdout support, missing input file triggers stdin detection
+        // Behavior depends on whether stdin is piped in test environment
         let args = ["swiftcompress", "x", "-m", "lzfse"]
 
         // Act & Assert
-        XCTAssertThrowsError(try sut.parse(args)) { error in
-            guard let cliError = error as? CLIError else {
-                XCTFail("Expected CLIError but got \(type(of: error))")
-                return
-            }
+        if TerminalDetector.isStdinPipe() {
+            // If stdin is piped, parsing should succeed with stdin as input
+            let result = try? sut.parse(args)
+            XCTAssertNotNil(result, "Should parse successfully when stdin is piped")
+        } else {
+            // If stdin is not piped, should throw error
+            XCTAssertThrowsError(try sut.parse(args)) { error in
+                guard let cliError = error as? CLIError else {
+                    XCTFail("Expected CLIError but got \(type(of: error))")
+                    return
+                }
 
-            if case .missingRequiredArgument = cliError {
-                // Expected error
-            } else {
-                XCTFail("Expected missingRequiredArgument error but got \(cliError)")
+                if case .missingRequiredArgument(let name) = cliError {
+                    XCTAssertTrue(name.lowercased().contains("input") ||
+                                 name.lowercased().contains("file") ||
+                                 name.lowercased().contains("stdin"),
+                                  "Expected missing input error, got: \(name)")
+                } else {
+                    XCTFail("Expected missingRequiredArgument error but got \(cliError)")
+                }
             }
         }
     }
@@ -297,7 +361,7 @@ final class ArgumentParserTests: XCTestCase {
         // Verify the command was parsed correctly
         if let result = try? sut.parse(args) {
             XCTAssertEqual(result.commandType, .decompress)
-            XCTAssertEqual(result.inputPath, "input.lzfse")
+            assertInputFile(result, equals: "input.lzfse")
             XCTAssertNil(result.algorithmName, "Algorithm should be nil (to be inferred)")
         }
     }
@@ -379,13 +443,35 @@ final class ArgumentParserTests: XCTestCase {
 
     // MARK: - Edge Case Tests
 
-    func testParseCommand_EmptyInputPath_AcceptedByParser() throws {
-        // ArgumentParser will accept empty string, validation happens later
+    func testParseCommand_EmptyInputPath_HandlesBothScenarios() throws {
+        // Empty input path triggers stdin detection
+        // Behavior depends on whether stdin is piped in test environment
         let args = ["swiftcompress", "c", "", "-m", "lzfse"]
 
-        let result = try sut.parse(args)
-        XCTAssertNotNil(result)
-        XCTAssertEqual(result?.inputPath, "")
+        if TerminalDetector.isStdinPipe() {
+            // If stdin is piped (test runner), parsing should succeed with stdin as input
+            let result = try? sut.parse(args)
+            XCTAssertNotNil(result, "Should parse successfully when stdin is piped")
+            if case .stdin = result?.inputSource {
+                // Expected
+            } else {
+                XCTFail("Expected inputSource to be stdin when piped")
+            }
+        } else {
+            // If stdin is not piped, should throw error
+            XCTAssertThrowsError(try sut.parse(args)) { error in
+                guard let cliError = error as? CLIError else {
+                    XCTFail("Expected CLIError but got \(type(of: error))")
+                    return
+                }
+                if case .missingRequiredArgument(let name) = cliError {
+                    XCTAssertTrue(name.contains("inputFile") || name.contains("stdin"),
+                                 "Expected missing input error, got: \(name)")
+                } else {
+                    XCTFail("Expected missingRequiredArgument error but got \(cliError)")
+                }
+            }
+        }
     }
 
     func testParseCommand_OutputPathWithoutDash_ParsedAsArgument() {
@@ -417,9 +503,9 @@ final class ArgumentParserTests: XCTestCase {
         let result3 = try sut.parse(args3)
 
         XCTAssertEqual(result1?.commandType, result2?.commandType)
-        XCTAssertEqual(result1?.inputPath, result2?.inputPath)
+        XCTAssertEqual(result1?.inputSource, result2?.inputSource)
         XCTAssertEqual(result1?.algorithmName, result2?.algorithmName)
-        XCTAssertEqual(result1?.outputPath, result2?.outputPath)
+        XCTAssertEqual(result1?.outputDestination, result2?.outputDestination)
         XCTAssertEqual(result1?.forceOverwrite, result2?.forceOverwrite)
 
         XCTAssertEqual(result2?.commandType, result3?.commandType)
@@ -432,28 +518,28 @@ final class ArgumentParserTests: XCTestCase {
         let args = ["swiftcompress", "c", "my file.txt", "-m", "lzfse"]
 
         let result = try sut.parse(args)
-        XCTAssertEqual(result?.inputPath, "my file.txt")
+        assertInputFile(result, equals: "my file.txt")
     }
 
     func testParseCommand_InputPathWithSpecialCharacters() throws {
         let args = ["swiftcompress", "c", "file-name_123.txt", "-m", "lz4"]
 
         let result = try sut.parse(args)
-        XCTAssertEqual(result?.inputPath, "file-name_123.txt")
+        assertInputFile(result, equals: "file-name_123.txt")
     }
 
     func testParseCommand_AbsolutePath() throws {
         let args = ["swiftcompress", "c", "/usr/local/bin/file.txt", "-m", "zlib"]
 
         let result = try sut.parse(args)
-        XCTAssertEqual(result?.inputPath, "/usr/local/bin/file.txt")
+        assertInputFile(result, equals: "/usr/local/bin/file.txt")
     }
 
     func testParseCommand_RelativePath() throws {
         let args = ["swiftcompress", "c", "../file.txt", "-m", "lzma"]
 
         let result = try sut.parse(args)
-        XCTAssertEqual(result?.inputPath, "../file.txt")
+        assertInputFile(result, equals: "../file.txt")
     }
 
     // MARK: - ParsedCommand Model Tests
@@ -461,23 +547,23 @@ final class ArgumentParserTests: XCTestCase {
     func testParsedCommand_EquatableConformance() {
         let cmd1 = ParsedCommand(
             commandType: .compress,
-            inputPath: "input.txt",
+            inputSource: .file(path: "input.txt"),
             algorithmName: "lzfse",
-            outputPath: "output.lzfse",
+            outputDestination: .file(path: "output.lzfse"),
             forceOverwrite: true
         )
 
         let cmd2 = ParsedCommand(
             commandType: .compress,
-            inputPath: "input.txt",
+            inputSource: .file(path: "input.txt"),
             algorithmName: "lzfse",
-            outputPath: "output.lzfse",
+            outputDestination: .file(path: "output.lzfse"),
             forceOverwrite: true
         )
 
         let cmd3 = ParsedCommand(
             commandType: .decompress,
-            inputPath: "input.txt",
+            inputSource: .file(path: "input.txt"),
             algorithmName: "lzfse"
         )
 
@@ -493,9 +579,16 @@ final class ArgumentParserTests: XCTestCase {
         let result = try sut.parse(args)
 
         XCTAssertEqual(result?.commandType, .compress)
-        XCTAssertEqual(result?.inputPath, "mydata.txt")
+        assertInputFile(result, equals: "mydata.txt")
         XCTAssertEqual(result?.algorithmName, "lzfse")
-        XCTAssertNil(result?.outputPath) // Should use default
+        // In test environment, stdout may be piped, so outputDestination may be .stdout or nil
+        if let dest = result?.outputDestination {
+            if case .stdout = dest {
+                // Expected in test environment
+            } else {
+                XCTFail("Expected outputDestination to be nil or .stdout, got: \(dest)")
+            }
+        }
         XCTAssertFalse(result?.forceOverwrite ?? true)
     }
 
@@ -505,9 +598,9 @@ final class ArgumentParserTests: XCTestCase {
         let result = try sut.parse(args)
 
         XCTAssertEqual(result?.commandType, .decompress)
-        XCTAssertEqual(result?.inputPath, "archive.lz4")
+        assertInputFile(result, equals: "archive.lz4")
         XCTAssertEqual(result?.algorithmName, "lz4")
-        XCTAssertEqual(result?.outputPath, "data.txt")
+        assertOutputFile(result, equals: "data.txt")
         XCTAssertTrue(result?.forceOverwrite ?? false)
     }
 
@@ -517,6 +610,6 @@ final class ArgumentParserTests: XCTestCase {
 
         let result = try sut.parse(args)
 
-        XCTAssertEqual(result?.inputPath, longPath)
+        assertInputFile(result, equals: longPath)
     }
 }

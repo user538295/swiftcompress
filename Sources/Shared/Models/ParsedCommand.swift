@@ -4,23 +4,23 @@ import Foundation
 /// Output of ArgumentParser, input to CommandRouter
 struct ParsedCommand: Equatable {
     let commandType: CommandType
-    let inputPath: String
-    let algorithmName: String?  // Optional for decompression (can be inferred)
-    let outputPath: String?     // Optional, uses default if nil
+    let inputSource: InputSource            // Changed from inputPath
+    let algorithmName: String?              // Optional for decompression (can be inferred)
+    let outputDestination: OutputDestination?  // Changed from outputPath
     let forceOverwrite: Bool
 
     /// Standard initializer for ParsedCommand
     init(
         commandType: CommandType,
-        inputPath: String,
+        inputSource: InputSource,
         algorithmName: String? = nil,
-        outputPath: String? = nil,
+        outputDestination: OutputDestination? = nil,
         forceOverwrite: Bool = false
     ) {
         self.commandType = commandType
-        self.inputPath = inputPath
+        self.inputSource = inputSource
         self.algorithmName = algorithmName
-        self.outputPath = outputPath
+        self.outputDestination = outputDestination
         self.forceOverwrite = forceOverwrite
     }
 }

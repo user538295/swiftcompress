@@ -112,9 +112,9 @@ final class CommandRouterTests: XCTestCase {
         let inputPath = "/tmp/test.txt"
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -143,9 +143,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: "/tmp/test.txt",
+            inputSource: .file(path: "/tmp/test.txt"),
             algorithmName: nil,  // Missing algorithm
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -169,9 +169,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: "/tmp/test.txt",
+            inputSource: .file(path: "/tmp/test.txt"),
             algorithmName: "lz4",
-            outputPath: "/tmp/output.lz4",
+            outputDestination: .file(path: "/tmp/output.lz4"),
             forceOverwrite: false
         )
 
@@ -196,9 +196,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: "/tmp/test.txt",
+            inputSource: .file(path: "/tmp/test.txt"),
             algorithmName: "zlib",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: true
         )
 
@@ -223,9 +223,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: "/tmp/test.txt",
+            inputSource: .file(path: "/tmp/test.txt"),
             algorithmName: "invalid",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -248,9 +248,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: "/tmp/nonexistent.txt",
+            inputSource: .file(path: "/tmp/nonexistent.txt"),
             algorithmName: "lzfse",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -272,9 +272,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: "/tmp/unreadable.txt",
+            inputSource: .file(path: "/tmp/unreadable.txt"),
             algorithmName: "lzfse",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -299,9 +299,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .decompress,
-            inputPath: "/tmp/test.txt.lzfse",
+            inputSource: .file(path: "/tmp/test.txt.lzfse"),
             algorithmName: "lzfse",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -328,9 +328,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .decompress,
-            inputPath: "/tmp/test.txt.lz4",
+            inputSource: .file(path: "/tmp/test.txt.lz4"),
             algorithmName: nil,  // Algorithm should be inferred
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -354,9 +354,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .decompress,
-            inputPath: "/tmp/compressed.zlib",
+            inputSource: .file(path: "/tmp/compressed.zlib"),
             algorithmName: "zlib",
-            outputPath: "/tmp/output.txt",
+            outputDestination: .file(path: "/tmp/output.txt"),
             forceOverwrite: false
         )
 
@@ -380,9 +380,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .decompress,
-            inputPath: "/tmp/test.txt.lzma",
+            inputSource: .file(path: "/tmp/test.txt.lzma"),
             algorithmName: "lzma",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: true
         )
 
@@ -406,9 +406,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .decompress,
-            inputPath: "/tmp/test.unknown",
+            inputSource: .file(path: "/tmp/test.unknown"),
             algorithmName: nil,  // Cannot infer from .unknown extension
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -475,9 +475,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: "/tmp/test.txt",
+            inputSource: .file(path: "/tmp/test.txt"),
             algorithmName: "lzfse",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -502,9 +502,9 @@ final class CommandRouterTests: XCTestCase {
         // Arrange
         let command = ParsedCommand(
             commandType: .decompress,
-            inputPath: "/tmp/missing.lzfse",
+            inputSource: .file(path: "/tmp/missing.lzfse"),
             algorithmName: "lzfse",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -533,9 +533,9 @@ final class CommandRouterTests: XCTestCase {
             let inputPath = "/tmp/test_\(algorithm).txt"
             let command = ParsedCommand(
                 commandType: .compress,
-                inputPath: inputPath,
+                inputSource: .file(path: inputPath),
                 algorithmName: algorithm,
-                outputPath: nil,
+                outputDestination: nil,
                 forceOverwrite: false
             )
 
@@ -571,9 +571,9 @@ final class CommandRouterTests: XCTestCase {
             let inputPath = "/tmp/test.\(algorithm)"
             let command = ParsedCommand(
                 commandType: .decompress,
-                inputPath: inputPath,
+                inputSource: .file(path: inputPath),
                 algorithmName: algorithm,
-                outputPath: nil,
+                outputDestination: nil,
                 forceOverwrite: false
             )
 
@@ -605,9 +605,9 @@ final class CommandRouterTests: XCTestCase {
         // Assert all dependencies are set (via successful routing)
         let command = ParsedCommand(
             commandType: .compress,
-            inputPath: "/tmp/test.txt",
+            inputSource: .file(path: "/tmp/test.txt"),
             algorithmName: "lzfse",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false
         )
 
@@ -694,6 +694,32 @@ class MockFileHandler: FileHandlerProtocol {
 
     func createDirectory(at path: String) throws {
         // No-op for mock
+    }
+
+    // MARK: - stdin/stdout Support
+
+    func inputStream(from source: InputSource) throws -> InputStream {
+        switch source {
+        case .file(let path):
+            return try inputStream(at: path)
+        case .stdin:
+            // For testing, return empty stream
+            let stream = InputStream(data: Data())
+            stream.open()
+            return stream
+        }
+    }
+
+    func outputStream(to destination: OutputDestination) throws -> OutputStream {
+        switch destination {
+        case .file(let path):
+            return try outputStream(at: path)
+        case .stdout:
+            // For testing, return memory stream
+            let stream = OutputStream.toMemory()
+            stream.open()
+            return stream
+        }
     }
 }
 

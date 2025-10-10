@@ -23,6 +23,11 @@ enum DomainError: SwiftCompressError {
     case invalidFlagCombination(flags: [String], reason: String)
     case algorithmCannotBeInferred(path: String, extension: String?, supportedExtensions: [String])
 
+    // stdin/stdout Errors
+    case outputDestinationRequired(reason: String)
+    case stdinNotAvailable(reason: String)
+    case stdoutNotAvailable(reason: String)
+
     var description: String {
         switch self {
         case .invalidAlgorithmName(let name, let supported):
@@ -60,6 +65,15 @@ enum DomainError: SwiftCompressError {
             message += "Please specify the algorithm explicitly using: -m <algorithm>"
 
             return message
+
+        case .outputDestinationRequired(let reason):
+            return "Output destination cannot be determined. \(reason)"
+
+        case .stdinNotAvailable(let reason):
+            return "stdin is not available. \(reason)"
+
+        case .stdoutNotAvailable(let reason):
+            return "stdout is not available. \(reason)"
         }
     }
 
@@ -77,6 +91,9 @@ enum DomainError: SwiftCompressError {
         case .missingRequiredArgument: return "DOMAIN-030"
         case .invalidFlagCombination: return "DOMAIN-031"
         case .algorithmCannotBeInferred: return "DOMAIN-032"
+        case .outputDestinationRequired: return "DOMAIN-040"
+        case .stdinNotAvailable: return "DOMAIN-041"
+        case .stdoutNotAvailable: return "DOMAIN-042"
         }
     }
 

@@ -32,14 +32,24 @@ extension SwiftCompressCLI {
     struct Compress: ParsableCommand {
         static let configuration = CommandConfiguration(
             commandName: "c",
-            abstract: "Compress a file using the specified algorithm",
+            abstract: "Compress a file or stdin using the specified algorithm",
+            discussion: """
+            Compress data using Apple's compression algorithms.
+
+            File-based usage:
+              swiftcompress c input.txt -m lzfse
+
+            Pipeline usage:
+              cat input.txt | swiftcompress c -m lzfse > output.lzfse
+              swiftcompress c input.txt -m lzfse | ssh remote "cat > file.lzfse"
+            """,
             helpNames: [.short, .long]
         )
 
         @Argument(
-            help: "Path to the input file to compress"
+            help: "Path to the input file to compress (or use stdin pipe)"
         )
-        var inputFile: String
+        var inputFile: String?  // Changed to optional for stdin support
 
         @Option(
             name: .shortAndLong,
@@ -49,7 +59,7 @@ extension SwiftCompressCLI {
 
         @Option(
             name: .shortAndLong,
-            help: "Output file path (default: <inputFile>.<algorithm>)"
+            help: "Output file path (default: <inputFile>.<algorithm> or stdout if piped)"
         )
         var output: String?
 
@@ -66,7 +76,29 @@ extension SwiftCompressCLI {
 
         /// Convert to ParsedCommand for domain layer
         func toParsedCommand() throws -> ParsedCommand {
-            // Validate algorithm name
+            // 1. Determine input source
+            let inputSource: InputSource
+            if let file = inputFile, !file.isEmpty {
+                inputSource = .file(path: file)
+            } else if TerminalDetector.isStdinPipe() {
+                inputSource = .stdin
+            } else {
+                throw CLIError.missingRequiredArgument(
+                    name: "inputFile (no file provided and stdin is not a pipe)"
+                )
+            }
+
+            // 2. Determine output destination
+            let outputDest: OutputDestination?
+            if let out = output {
+                outputDest = .file(path: out)
+            } else if TerminalDetector.isStdoutPipe() {
+                outputDest = .stdout
+            } else {
+                outputDest = nil  // Will use default path resolution
+            }
+
+            // 3. Validate algorithm name
             let supportedAlgorithms = ["lzfse", "lz4", "zlib", "lzma"]
             let normalizedMethod = method.lowercased()
 
@@ -80,9 +112,9 @@ extension SwiftCompressCLI {
 
             return ParsedCommand(
                 commandType: .compress,
-                inputPath: inputFile,
+                inputSource: inputSource,
                 algorithmName: normalizedMethod,
-                outputPath: output,
+                outputDestination: outputDest,
                 forceOverwrite: force
             )
         }
@@ -96,24 +128,36 @@ extension SwiftCompressCLI {
     struct Decompress: ParsableCommand {
         static let configuration = CommandConfiguration(
             commandName: "x",
-            abstract: "Decompress a file using the specified algorithm",
+            abstract: "Decompress a file or stdin using the specified algorithm",
+            discussion: """
+            Decompress data using Apple's compression algorithms.
+
+            File-based usage:
+              swiftcompress x compressed.lzfse -m lzfse
+
+            Pipeline usage:
+              cat compressed.lzfse | swiftcompress x -m lzfse > output.txt
+              swiftcompress x compressed.lzfse -m lzfse | less
+
+            Note: When reading from stdin, algorithm must be specified with -m flag.
+            """,
             helpNames: [.short, .long]
         )
 
         @Argument(
-            help: "Path to the input file to decompress"
+            help: "Path to the input file to decompress (or use stdin pipe)"
         )
-        var inputFile: String
+        var inputFile: String?  // Changed to optional for stdin support
 
         @Option(
             name: .shortAndLong,
-            help: "Decompression algorithm: lzfse, lz4, zlib, or lzma (optional, can be inferred from extension)"
+            help: "Decompression algorithm: lzfse, lz4, zlib, or lzma (required for stdin, optional for files)"
         )
         var method: String?
 
         @Option(
             name: .shortAndLong,
-            help: "Output file path (default: input path with algorithm extension stripped)"
+            help: "Output file path (default: input path with algorithm extension stripped or stdout if piped)"
         )
         var output: String?
 
@@ -130,7 +174,36 @@ extension SwiftCompressCLI {
 
         /// Convert to ParsedCommand for domain layer
         func toParsedCommand() throws -> ParsedCommand {
-            // Validate algorithm name if provided
+            // 1. Determine input source
+            let inputSource: InputSource
+            if let file = inputFile, !file.isEmpty {
+                inputSource = .file(path: file)
+            } else if TerminalDetector.isStdinPipe() {
+                inputSource = .stdin
+            } else {
+                throw CLIError.missingRequiredArgument(
+                    name: "inputFile (no file provided and stdin is not a pipe)"
+                )
+            }
+
+            // 2. For stdin input, algorithm MUST be explicit
+            if case .stdin = inputSource, method == nil {
+                throw CLIError.missingRequiredArgument(
+                    name: "--method/-m (required when reading from stdin - cannot infer from extension)"
+                )
+            }
+
+            // 3. Determine output destination
+            let outputDest: OutputDestination?
+            if let out = output {
+                outputDest = .file(path: out)
+            } else if TerminalDetector.isStdoutPipe() {
+                outputDest = .stdout
+            } else {
+                outputDest = nil  // Will use default path resolution
+            }
+
+            // 4. Validate algorithm name if provided
             let normalizedMethod: String?
             if let method = method {
                 let supportedAlgorithms = ["lzfse", "lz4", "zlib", "lzma"]
@@ -150,9 +223,9 @@ extension SwiftCompressCLI {
 
             return ParsedCommand(
                 commandType: .decompress,
-                inputPath: inputFile,
+                inputSource: inputSource,
                 algorithmName: normalizedMethod,
-                outputPath: output,
+                outputDestination: outputDest,
                 forceOverwrite: force
             )
         }

@@ -15,8 +15,9 @@
 - 🚀 **Four Compression Algorithms**: LZFSE, LZ4, ZLIB, LZMA
 - 🎯 **Explicit Control**: User specifies algorithm and output path
 - 📦 **Native Performance**: Leverages Apple's Compression framework
+- 🔄 **Unix Pipeline Support**: Full stdin/stdout streaming for pipelines
 - 💻 **Scriptable**: Designed for CLI automation and scripting
-- 🧪 **Well-Tested**: 85%+ code coverage with comprehensive test suite
+- 🧪 **Well-Tested**: 95%+ code coverage with comprehensive test suite
 - 🏗️ **Clean Architecture**: Maintainable, extensible, and testable design
 
 ## Quick Start
@@ -76,15 +77,17 @@ swiftcompress c <input> -m <algorithm> [-o <output>] [-f]
 ### Decompress
 
 ```bash
-swiftcompress x <input> -m <algorithm> [-o <output>] [-f]
+swiftcompress x <input> [-m <algorithm>] [-o <output>] [-f]
 ```
 
 **Options:**
-- `-m <algorithm>`: Compression algorithm (required): `lzfse`, `lz4`, `zlib`, `lzma`
+- `-m <algorithm>`: Compression algorithm (optional for file inputs, inferred from extension; required for stdin): `lzfse`, `lz4`, `zlib`, `lzma`
 - `-o <output>`: Output file path (optional, defaults to input without extension)
 - `-f`: Force overwrite if output file exists
 
 ## Examples
+
+### File-based Compression
 
 ```bash
 # Compress with different algorithms
@@ -92,9 +95,9 @@ swiftcompress c document.pdf -m lzfse
 swiftcompress c video.mp4 -m lz4
 swiftcompress c archive.tar -m lzma
 
-# Decompress
-swiftcompress x document.pdf.lzfse -m lzfse
-swiftcompress x video.mp4.lz4 -m lz4
+# Decompress (algorithm inferred from extension)
+swiftcompress x document.pdf.lzfse
+swiftcompress x video.mp4.lz4
 
 # Custom output paths
 swiftcompress c large_dataset.csv -m zlib -o data.compressed
@@ -108,6 +111,40 @@ for file in *.txt; do
     swiftcompress c "$file" -m lzfse
 done
 ```
+
+### Unix Pipeline Support
+
+SwiftCompress fully supports stdin/stdout streaming for seamless integration with Unix pipelines:
+
+```bash
+# Compress from stdin to stdout
+cat largefile.txt | swiftcompress c -m lzfse > output.lzfse
+echo "Hello World" | swiftcompress c -m lz4 > message.lz4
+
+# Decompress from stdin to stdout
+cat compressed.lzfse | swiftcompress x -m lzfse > output.txt
+swiftcompress c input.txt -m zlib | swiftcompress x -m zlib > roundtrip.txt
+
+# Chain with other tools
+cat data.json | swiftcompress c -m lzfse | ssh user@remote "cat > data.json.lzfse"
+curl https://example.com/data.txt | swiftcompress c -m lz4 > cached.lz4
+
+# Mix stdin/stdout with file I/O
+cat input.txt | swiftcompress c -m lzfse -o output.lzfse
+swiftcompress x compressed.zlib -m zlib | less
+
+# Process multiple files through pipeline
+find . -name "*.log" | xargs cat | swiftcompress c -m lzma > all_logs.lzma
+
+# Real-time log compression
+tail -f app.log | swiftcompress c -m lz4 > app.log.lz4
+```
+
+**Pipeline Notes:**
+- When reading from stdin, you must specify the algorithm with `-m`
+- When writing to stdout, output is automatically piped
+- File integrity is maintained in all pipeline scenarios
+- Memory usage remains constant (~10 MB) regardless of data size
 
 ## Requirements
 
@@ -198,16 +235,17 @@ swiftcompress/
 
 ## Project Status & Roadmap
 
-**Current Version**: 0.1.0 (MVP Complete)
+**Current Version**: 0.1.0 (MVP Complete + stdin/stdout)
 **Status**: ✅ Fully functional CLI tool with all core features implemented
-**Test Coverage**: 95%+ (279/279 tests passing)
+**Test Coverage**: 95%+ (328/328 tests passing)
 
 ### Recent Milestones
 
 - ✅ **Phase 0**: Architecture & Design (Complete)
 - ✅ **Phase 1**: MVP Implementation - All 4 layers, 4 algorithms (Complete)
 - ✅ **Phase 2**: Usability Improvements - True streaming, help system, error messages (Complete)
-- 🚀 **Phase 3**: Advanced Features - stdin/stdout, compression levels (Planned)
+- ✅ **Phase 3a**: stdin/stdout Streaming - Full Unix pipeline support (Complete)
+- 🚀 **Phase 3b**: Advanced Features - Compression levels, progress indicators (Planned)
 
 **For detailed development roadmap, milestones, and task tracking, see [ROADMAP.md](ROADMAP.md)**
 
@@ -247,7 +285,7 @@ swift test --enable-code-coverage
 swift test --filter CompressCommandTests
 ```
 
-The project maintains **85%+ test coverage** across all layers with comprehensive unit, integration, and E2E tests.
+The project maintains **95%+ test coverage** across all layers with comprehensive unit, integration, and E2E tests. Currently **328 tests passing** with 0 failures.
 
 ## Performance
 
@@ -298,19 +336,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Status
 
-**Current Version**: 0.1.0 (MVP Complete)
+**Current Version**: 0.1.0 (MVP Complete + stdin/stdout)
 **Status**: ✅ Fully functional CLI tool with all layers implemented
-**Test Coverage**: 95%+ (279/279 tests passing)
+**Test Coverage**: 95%+ (328/328 tests passing)
 **Last Updated**: October 2025
 
-### MVP Achievements
+### MVP + Enhanced Features
 - ✅ All 4 compression algorithms working (LZFSE, LZ4, ZLIB, LZMA)
 - ✅ Complete CLI interface with ArgumentParser
 - ✅ Full compress/decompress workflows
+- ✅ **Unix pipeline support (stdin/stdout streaming)**
 - ✅ Comprehensive error handling
 - ✅ 95%+ test coverage across all layers
 - ✅ Clean Architecture fully implemented
 - ✅ Round-trip data integrity verified
+- ✅ True streaming with constant memory footprint
 
 ---
 

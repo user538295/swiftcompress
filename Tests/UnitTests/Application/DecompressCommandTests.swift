@@ -51,9 +51,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             forceOverwrite: false,
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -87,9 +87,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: nil,  // Should be inferred
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false,
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -120,9 +120,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "zlib",
-            outputPath: nil,  // Should use default
+            outputDestination: nil,  // Should use default
             forceOverwrite: false,
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -154,9 +154,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzma",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             forceOverwrite: true,  // Force overwrite
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -181,9 +181,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: nil,
+            outputDestination: nil,
             forceOverwrite: false,
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -203,7 +203,7 @@ final class DecompressCommandTests: XCTestCase {
     func testExecute_ThrowsError_WhenInputPathEmpty() {
         // Arrange
         let command = DecompressCommand(
-            inputPath: "",
+            inputSource: .file(path: ""),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -225,7 +225,7 @@ final class DecompressCommandTests: XCTestCase {
     func testExecute_ThrowsError_WhenInputPathContainsNullBytes() {
         // Arrange
         let command = DecompressCommand(
-            inputPath: "/tmp/file\0.txt",
+            inputSource: .file(path: "/tmp/file\0.txt"),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -243,7 +243,7 @@ final class DecompressCommandTests: XCTestCase {
         // Arrange
         // Use a relative path with .. that doesn't normalize away
         let command = DecompressCommand(
-            inputPath: "../etc/passwd",
+            inputSource: .file(path: "../etc/passwd"),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -271,7 +271,7 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.fileExistsResults = [inputPath: false]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -298,7 +298,7 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: false]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -327,7 +327,7 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: nil,  // No explicit algorithm
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -356,7 +356,7 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "unsupported",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -386,7 +386,7 @@ final class DecompressCommandTests: XCTestCase {
         algorithmRegistry = AlgorithmRegistry()
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lz4",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -416,7 +416,7 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lz4",  // Explicit override
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -444,9 +444,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             forceOverwrite: false,  // No force
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -476,9 +476,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [path: true]
 
         let command = DecompressCommand(
-            inputPath: path,
+            inputSource: .file(path: path),
             algorithmName: "lzfse",
-            outputPath: path,  // Same as input
+            outputDestination: .file(path: path),  // Same as input
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -512,9 +512,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -545,7 +545,7 @@ final class DecompressCommandTests: XCTestCase {
         mockAlgorithm.decompressStreamError = InfrastructureError.corruptedData(algorithm: "lzfse")
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -578,9 +578,9 @@ final class DecompressCommandTests: XCTestCase {
         )
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -605,7 +605,7 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.inputStreamError = InfrastructureError.streamCreationFailed(path: inputPath)
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -638,9 +638,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.outputStreamError = InfrastructureError.streamCreationFailed(path: outputPath)
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
-            outputPath: outputPath,
+            outputDestination: .file(path: outputPath),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -667,9 +667,9 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",  // Must be explicit
-            outputPath: "/tmp/decompressed",
+            outputDestination: .file(path: "/tmp/decompressed"),
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
             validationRules: validationRules,
@@ -692,7 +692,7 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "lzfse",
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -719,7 +719,7 @@ final class DecompressCommandTests: XCTestCase {
         mockFileHandler.isReadableResults = [inputPath: true]
 
         let command = DecompressCommand(
-            inputPath: inputPath,
+            inputSource: .file(path: inputPath),
             algorithmName: "LZFSE",  // Uppercase
             fileHandler: mockFileHandler,
             pathResolver: pathResolver,
@@ -787,6 +787,28 @@ private class DecompressMockFileHandler: FileHandlerProtocol {
 
     func createDirectory(at path: String) throws {
         createDirectoryPaths.append(path)
+    }
+
+    // MARK: - stdin/stdout Support
+
+    func inputStream(from source: InputSource) throws -> InputStream {
+        switch source {
+        case .file(let path):
+            return try inputStream(at: path)
+        case .stdin:
+            // For testing, return empty stream
+            return InputStream(data: Data())
+        }
+    }
+
+    func outputStream(to destination: OutputDestination) throws -> OutputStream {
+        switch destination {
+        case .file(let path):
+            return try outputStream(at: path)
+        case .stdout:
+            // For testing, return memory stream
+            return OutputStream(toMemory: ())
+        }
     }
 }
 

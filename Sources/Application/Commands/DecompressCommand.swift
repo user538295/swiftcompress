@@ -6,9 +6,9 @@ final class DecompressCommand: Command {
 
     // MARK: - Properties
 
-    let inputPath: String
-    let algorithmName: String?  // Optional: can be inferred from extension
-    let outputPath: String?     // Optional: defaults to input without extension
+    let inputSource: InputSource
+    let algorithmName: String?  // Optional for file input: can be inferred from extension
+    let outputDestination: OutputDestination?  // Optional: defaults based on input source
     let forceOverwrite: Bool
 
     // Injected dependencies
@@ -20,18 +20,18 @@ final class DecompressCommand: Command {
     // MARK: - Initialization
 
     init(
-        inputPath: String,
+        inputSource: InputSource,
         algorithmName: String? = nil,
-        outputPath: String? = nil,
+        outputDestination: OutputDestination? = nil,
         forceOverwrite: Bool = false,
         fileHandler: FileHandlerProtocol,
         pathResolver: FilePathResolver,
         validationRules: ValidationRules,
         algorithmRegistry: AlgorithmRegistry
     ) {
-        self.inputPath = inputPath
+        self.inputSource = inputSource
         self.algorithmName = algorithmName
-        self.outputPath = outputPath
+        self.outputDestination = outputDestination
         self.forceOverwrite = forceOverwrite
         self.fileHandler = fileHandler
         self.pathResolver = pathResolver
@@ -46,67 +46,78 @@ final class DecompressCommand: Command {
     /// - Throws: ApplicationError for unexpected failures
     func execute() throws {
         do {
-            // Step 1: Validate input path
-            try validationRules.validateInputPath(inputPath)
+            // Step 1: Validate input (only for file sources)
+            if case .file(let path) = inputSource {
+                try validationRules.validateInputPath(path)
 
-            // Step 2: Check input file exists
-            guard fileHandler.fileExists(at: inputPath) else {
-                throw InfrastructureError.fileNotFound(path: inputPath)
+                // Check input file exists and is readable
+                guard fileHandler.fileExists(at: path) else {
+                    throw InfrastructureError.fileNotFound(path: path)
+                }
+
+                guard fileHandler.isReadable(at: path) else {
+                    throw InfrastructureError.fileNotReadable(path: path, reason: "Permission denied")
+                }
             }
 
-            // Step 3: Check input file is readable
-            guard fileHandler.isReadable(at: inputPath) else {
-                throw InfrastructureError.fileNotReadable(path: inputPath, reason: "Permission denied")
-            }
-
-            // Step 4: Determine algorithm (explicit or inferred)
+            // Step 2: Determine algorithm (explicit or inferred)
             let resolvedAlgorithmName = try resolveAlgorithmName()
 
-            // Step 5: Validate algorithm name
+            // Step 3: Validate algorithm name
             try validationRules.validateAlgorithmName(
                 resolvedAlgorithmName,
                 supportedAlgorithms: algorithmRegistry.supportedAlgorithms
             )
 
-            // Step 6: Get algorithm from registry
+            // Step 4: Get algorithm from registry
             guard let algorithm = algorithmRegistry.algorithm(named: resolvedAlgorithmName) else {
                 throw DomainError.algorithmNotRegistered(name: resolvedAlgorithmName)
             }
 
-            // Step 7: Resolve output path
-            let resolvedOutputPath = pathResolver.resolveDecompressOutputPath(
-                inputPath: inputPath,
+            // Step 5: Resolve output destination
+            let resolvedOutputDestination = try pathResolver.resolveDecompressOutputDestination(
+                inputSource: inputSource,
                 algorithmName: resolvedAlgorithmName,
-                outputPath: outputPath,
+                outputDestination: outputDestination,
                 fileExists: { [fileHandler] path in
                     fileHandler.fileExists(at: path)
                 }
             )
 
-            // Step 8: Validate output path
-            try validationRules.validateOutputPath(resolvedOutputPath, inputPath: inputPath)
+            // Step 6: Validate output destination (only for file destinations)
+            if case .file(let outputPath) = resolvedOutputDestination {
+                // Validate output path
+                if case .file(let inputPath) = inputSource {
+                    try validationRules.validateOutputPath(outputPath, inputPath: inputPath)
+                } else {
+                    // For stdin input, just validate the output path format
+                    try validationRules.validateOutputPath(outputPath, inputPath: "")
+                }
 
-            // Step 9: Check output file overwrite protection
-            if fileHandler.fileExists(at: resolvedOutputPath) && !forceOverwrite {
-                throw DomainError.outputFileExists(path: resolvedOutputPath)
+                // Check output file overwrite protection
+                if fileHandler.fileExists(at: outputPath) && !forceOverwrite {
+                    throw DomainError.outputFileExists(path: outputPath)
+                }
+
+                // Create output directory if needed
+                let outputDirectory = (outputPath as NSString).deletingLastPathComponent
+                if !outputDirectory.isEmpty && !fileHandler.fileExists(at: outputDirectory) {
+                    try fileHandler.createDirectory(at: outputDirectory)
+                }
             }
 
-            // Step 10: Create output directory if needed
-            let outputDirectory = (resolvedOutputPath as NSString).deletingLastPathComponent
-            if !outputDirectory.isEmpty && !fileHandler.fileExists(at: outputDirectory) {
-                try fileHandler.createDirectory(at: outputDirectory)
-            }
+            // Step 7: Create input and output streams
+            let inputStream = try fileHandler.inputStream(from: inputSource)
+            let outputStream = try fileHandler.outputStream(to: resolvedOutputDestination)
 
-            // Step 11: Create input and output streams
-            let inputStream = try fileHandler.inputStream(at: inputPath)
-            let outputStream = try fileHandler.outputStream(at: resolvedOutputPath)
-
-            // Step 12: Execute decompression with cleanup
+            // Step 8: Execute decompression with cleanup
             var decompressionSucceeded = false
             defer {
-                // Cleanup partial output on failure
+                // Cleanup partial output on failure (only for file outputs)
                 if !decompressionSucceeded {
-                    try? fileHandler.deleteFile(at: resolvedOutputPath)
+                    if case .file(let outputPath) = resolvedOutputDestination {
+                        try? fileHandler.deleteFile(at: outputPath)
+                    }
                 }
             }
 
@@ -123,10 +134,14 @@ final class DecompressCommand: Command {
             throw error
         } catch {
             // Wrap unexpected errors
+            let inputDesc = switch inputSource {
+            case .file(let path): path
+            case .stdin: "<stdin>"
+            }
             throw ApplicationError.commandExecutionFailed(
                 commandName: "decompress",
                 underlyingError: error as? SwiftCompressError ??
-                    DomainError.invalidInputPath(path: inputPath, reason: "Unexpected error: \(error.localizedDescription)")
+                    DomainError.invalidInputPath(path: inputDesc, reason: "Unexpected error: \(error.localizedDescription)")
             )
         }
     }
@@ -142,20 +157,34 @@ final class DecompressCommand: Command {
             return explicitAlgorithm
         }
 
-        // Otherwise, try to infer from file extension
-        guard let inferredAlgorithm = pathResolver.inferAlgorithm(from: inputPath) else {
-            // Extract file extension for better error message
-            let url = URL(fileURLWithPath: inputPath)
-            let fileExtension = url.pathExtension
-            let supportedExtensions = algorithmRegistry.supportedAlgorithms
-
+        // For stdin, algorithm MUST be explicit (cannot infer from extension)
+        if case .stdin = inputSource {
             throw DomainError.algorithmCannotBeInferred(
-                path: inputPath,
-                extension: fileExtension.isEmpty ? nil : fileExtension,
-                supportedExtensions: supportedExtensions
+                path: "<stdin>",
+                extension: nil,
+                supportedExtensions: algorithmRegistry.supportedAlgorithms
             )
         }
 
-        return inferredAlgorithm
+        // For file input, try to infer from file extension
+        if case .file(let path) = inputSource {
+            guard let inferredAlgorithm = pathResolver.inferAlgorithm(from: path) else {
+                // Extract file extension for better error message
+                let url = URL(fileURLWithPath: path)
+                let fileExtension = url.pathExtension
+                let supportedExtensions = algorithmRegistry.supportedAlgorithms
+
+                throw DomainError.algorithmCannotBeInferred(
+                    path: path,
+                    extension: fileExtension.isEmpty ? nil : fileExtension,
+                    supportedExtensions: supportedExtensions
+                )
+            }
+
+            return inferredAlgorithm
+        }
+
+        // This should never happen due to enum exhaustiveness
+        fatalError("Unexpected input source type")
     }
 }

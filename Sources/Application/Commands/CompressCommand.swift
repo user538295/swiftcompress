@@ -6,9 +6,9 @@ final class CompressCommand: Command {
 
     // MARK: - Properties
 
-    let inputPath: String
+    let inputSource: InputSource
     let algorithmName: String
-    let outputPath: String?
+    let outputDestination: OutputDestination?
     let forceOverwrite: Bool
 
     // Injected dependencies
@@ -21,27 +21,27 @@ final class CompressCommand: Command {
 
     /// Initialize compress command with dependencies
     /// - Parameters:
-    ///   - inputPath: Path to input file
+    ///   - inputSource: Input source (file or stdin)
     ///   - algorithmName: Name of compression algorithm (lzfse, lz4, zlib, lzma)
-    ///   - outputPath: Optional output path (defaults to inputPath.algorithmName)
+    ///   - outputDestination: Optional output destination (defaults based on input source)
     ///   - forceOverwrite: Whether to overwrite existing output file
     ///   - fileHandler: File system operations handler
     ///   - pathResolver: Path resolution service
     ///   - validationRules: Business validation rules
     ///   - algorithmRegistry: Algorithm registry for lookup
     init(
-        inputPath: String,
+        inputSource: InputSource,
         algorithmName: String,
-        outputPath: String? = nil,
+        outputDestination: OutputDestination? = nil,
         forceOverwrite: Bool = false,
         fileHandler: FileHandlerProtocol,
         pathResolver: FilePathResolver,
         validationRules: ValidationRules,
         algorithmRegistry: AlgorithmRegistry
     ) {
-        self.inputPath = inputPath
+        self.inputSource = inputSource
         self.algorithmName = algorithmName
-        self.outputPath = outputPath
+        self.outputDestination = outputDestination
         self.forceOverwrite = forceOverwrite
         self.fileHandler = fileHandler
         self.pathResolver = pathResolver
@@ -54,8 +54,19 @@ final class CompressCommand: Command {
     /// Execute compression workflow
     /// - Throws: DomainError or InfrastructureError on failure
     func execute() throws {
-        // Step 1: Validate input path
-        try validationRules.validateInputPath(inputPath)
+        // Step 1: Validate input (only for file sources)
+        if case .file(let path) = inputSource {
+            try validationRules.validateInputPath(path)
+
+            // Check input file exists and is readable
+            guard fileHandler.fileExists(at: path) else {
+                throw InfrastructureError.fileNotFound(path: path)
+            }
+
+            guard fileHandler.isReadable(at: path) else {
+                throw InfrastructureError.fileNotReadable(path: path, reason: "Permission denied")
+            }
+        }
 
         // Step 2: Validate algorithm name
         try validationRules.validateAlgorithmName(
@@ -63,44 +74,42 @@ final class CompressCommand: Command {
             supportedAlgorithms: algorithmRegistry.supportedAlgorithms
         )
 
-        // Step 3: Check input file exists
-        guard fileHandler.fileExists(at: inputPath) else {
-            throw InfrastructureError.fileNotFound(path: inputPath)
-        }
-
-        // Step 4: Check input file is readable
-        guard fileHandler.isReadable(at: inputPath) else {
-            throw InfrastructureError.fileNotReadable(path: inputPath, reason: "Permission denied")
-        }
-
-        // Step 5: Resolve output path
-        let resolvedOutputPath = pathResolver.resolveCompressOutputPath(
-            inputPath: inputPath,
+        // Step 3: Resolve output destination
+        let resolvedOutputDestination = try pathResolver.resolveCompressOutputDestination(
+            inputSource: inputSource,
             algorithmName: algorithmName,
-            outputPath: outputPath
+            outputDestination: outputDestination
         )
 
-        // Step 6: Validate output path
-        try validationRules.validateOutputPath(resolvedOutputPath, inputPath: inputPath)
+        // Step 4: Validate output destination (only for file destinations)
+        if case .file(let outputPath) = resolvedOutputDestination {
+            // Validate output path
+            if case .file(let inputPath) = inputSource {
+                try validationRules.validateOutputPath(outputPath, inputPath: inputPath)
+            } else {
+                // For stdin input, just validate the output path format
+                try validationRules.validateOutputPath(outputPath, inputPath: "")
+            }
 
-        // Step 7: Check if output exists and handle force flag
-        if fileHandler.fileExists(at: resolvedOutputPath) && !forceOverwrite {
-            throw DomainError.outputFileExists(path: resolvedOutputPath)
+            // Check if output exists and handle force flag
+            if fileHandler.fileExists(at: outputPath) && !forceOverwrite {
+                throw DomainError.outputFileExists(path: outputPath)
+            }
+
+            // Check output directory is writable
+            let outputDirectory = (outputPath as NSString).deletingLastPathComponent
+            if !outputDirectory.isEmpty && !fileHandler.isWritable(at: outputDirectory) {
+                throw InfrastructureError.directoryNotWritable(path: outputDirectory)
+            }
         }
 
-        // Step 8: Check output directory is writable
-        let outputDirectory = (resolvedOutputPath as NSString).deletingLastPathComponent
-        if !outputDirectory.isEmpty && !fileHandler.isWritable(at: outputDirectory) {
-            throw InfrastructureError.directoryNotWritable(path: outputDirectory)
-        }
-
-        // Step 9: Get algorithm from registry
+        // Step 5: Get algorithm from registry
         guard let algorithm = algorithmRegistry.algorithm(named: algorithmName) else {
             throw DomainError.algorithmNotRegistered(name: algorithmName)
         }
 
-        // Step 10: Create input stream
-        let inputStream = try fileHandler.inputStream(at: inputPath)
+        // Step 6: Create input stream
+        let inputStream = try fileHandler.inputStream(from: inputSource)
 
         // Ensure streams are closed on exit
         var outputStreamCreated = false
@@ -109,21 +118,23 @@ final class CompressCommand: Command {
         defer {
             inputStream.close()
 
-            // Clean up partial output on failure
+            // Clean up partial output on failure (only for file outputs)
             if outputStreamCreated && !success {
-                try? fileHandler.deleteFile(at: resolvedOutputPath)
+                if case .file(let outputPath) = resolvedOutputDestination {
+                    try? fileHandler.deleteFile(at: outputPath)
+                }
             }
         }
 
-        // Step 11: Create output stream
-        let outputStream = try fileHandler.outputStream(at: resolvedOutputPath)
+        // Step 7: Create output stream
+        let outputStream = try fileHandler.outputStream(to: resolvedOutputDestination)
         outputStreamCreated = true
 
         defer {
             outputStream.close()
         }
 
-        // Step 12: Execute compression
+        // Step 8: Execute compression
         try algorithm.compressStream(
             input: inputStream,
             output: outputStream,

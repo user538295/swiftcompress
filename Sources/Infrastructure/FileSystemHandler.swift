@@ -92,4 +92,38 @@ final class FileSystemHandler: FileHandlerProtocol {
             throw InfrastructureError.directoryNotWritable(path: path)
         }
     }
+
+    // MARK: - stdin/stdout Stream Creation
+
+    func inputStream(from source: InputSource) throws -> InputStream {
+        switch source {
+        case .file(let path):
+            // Use existing file-based method
+            return try inputStream(at: path)
+
+        case .stdin:
+            // Create stream from stdin using /dev/stdin
+            // This is the standard POSIX path for stdin on macOS and Linux
+            guard let stream = InputStream(fileAtPath: "/dev/stdin") else {
+                throw InfrastructureError.streamCreationFailed(path: "<stdin>")
+            }
+            return stream
+        }
+    }
+
+    func outputStream(to destination: OutputDestination) throws -> OutputStream {
+        switch destination {
+        case .file(let path):
+            // Use existing file-based method
+            return try outputStream(at: path)
+
+        case .stdout:
+            // Create stream to stdout using /dev/stdout
+            // This is the standard POSIX path for stdout on macOS and Linux
+            guard let stream = OutputStream(toFileAtPath: "/dev/stdout", append: false) else {
+                throw InfrastructureError.streamCreationFailed(path: "<stdout>")
+            }
+            return stream
+        }
+    }
 }

@@ -116,8 +116,8 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "test.txt", content: testContent)
         let outputFile = inputFile.path + ".lzfse"
 
-        // When
-        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse"])
+        // When - explicitly specify output to avoid stdout detection in test environment
+        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", outputFile])
 
         // Then
         XCTAssertEqual(result.exitCode, 0, "Compress should succeed")
@@ -138,8 +138,8 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "test-lz4.txt", content: testContent)
         let outputFile = inputFile.path + ".lz4"
 
-        // When
-        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lz4"])
+        // When - explicitly specify output to avoid stdout detection in test environment
+        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lz4", "-o", outputFile])
 
         // Then
         XCTAssertEqual(result.exitCode, 0, "Compress with LZ4 should succeed")
@@ -152,8 +152,8 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "test-zlib.txt", content: testContent)
         let outputFile = inputFile.path + ".zlib"
 
-        // When
-        let result = runCLI(arguments: ["c", inputFile.path, "-m", "zlib"])
+        // When - explicitly specify output to avoid stdout detection in test environment
+        let result = runCLI(arguments: ["c", inputFile.path, "-m", "zlib", "-o", outputFile])
 
         // Then
         XCTAssertEqual(result.exitCode, 0, "Compress with ZLIB should succeed")
@@ -166,8 +166,8 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "test-lzma.txt", content: testContent)
         let outputFile = inputFile.path + ".lzma"
 
-        // When
-        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzma"])
+        // When - explicitly specify output to avoid stdout detection in test environment
+        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzma", "-o", outputFile])
 
         // Then
         XCTAssertEqual(result.exitCode, 0, "Compress with LZMA should succeed")
@@ -194,12 +194,12 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "test-force.txt", content: testContent)
         let outputFile = inputFile.path + ".lzfse"
 
-        // First compress
-        _ = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse"])
+        // First compress - explicitly specify output to avoid stdout detection in test environment
+        _ = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", outputFile])
         XCTAssertTrue(fileExists(outputFile), "Initial output should exist")
 
         // When - compress again with force flag
-        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-f"])
+        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", outputFile, "-f"])
 
         // Then
         XCTAssertEqual(result.exitCode, 0, "Force overwrite should succeed")
@@ -214,14 +214,14 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "decompress-test.txt", content: testContent)
         let compressedFile = inputFile.path + ".lzfse"
 
-        _ = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse"])
+        _ = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", compressedFile])
         XCTAssertTrue(fileExists(compressedFile), "Compressed file should exist")
 
         // Delete original
         try? FileManager.default.removeItem(at: inputFile)
 
-        // When - Decompress
-        let result = runCLI(arguments: ["x", compressedFile, "-m", "lzfse"])
+        // When - Decompress - explicitly specify output to avoid stdout detection in test environment
+        let result = runCLI(arguments: ["x", compressedFile, "-m", "lzfse", "-o", inputFile.path])
 
         // Then
         XCTAssertEqual(result.exitCode, 0, "Decompress should succeed")
@@ -238,7 +238,7 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "custom-decompress.txt", content: testContent)
         let compressedFile = inputFile.path + ".lzfse"
 
-        _ = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse"])
+        _ = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", compressedFile])
 
         let customOutput = tempDirectory.appendingPathComponent("decompressed-output.txt").path
 
@@ -284,8 +284,8 @@ final class CLIIntegrationTests: XCTestCase {
         let compressedFile = inputFile.path + ".\(algorithm)"
         let decompressedFile = tempDirectory.appendingPathComponent("roundtrip-\(algorithm)-output.txt").path
 
-        // When - Compress
-        let compressResult = runCLI(arguments: ["c", inputFile.path, "-m", algorithm])
+        // When - Compress - explicitly specify output to avoid stdout detection in test environment
+        let compressResult = runCLI(arguments: ["c", inputFile.path, "-m", algorithm, "-o", compressedFile])
         XCTAssertEqual(compressResult.exitCode, 0, "Compression should succeed")
 
         // When - Decompress
@@ -348,12 +348,12 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "exists-test.txt", content: testContent)
         let outputFile = inputFile.path + ".lzfse"
 
-        // Create output file first
-        _ = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse"])
+        // Create output file first - explicitly specify output to avoid stdout detection in test environment
+        _ = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", outputFile])
         XCTAssertTrue(fileExists(outputFile), "Output should exist")
 
-        // When - Try to compress again without force flag
-        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse"])
+        // When - Try to compress again without force flag - must also specify output to test overwrite error
+        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", outputFile])
 
         // Then
         XCTAssertNotEqual(result.exitCode, 0, "Should fail when output exists")
@@ -417,8 +417,8 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "large-file.txt", content: largeContent)
         let outputFile = inputFile.path + ".lzfse"
 
-        // When
-        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse"])
+        // When - explicitly specify output to avoid stdout detection in test environment
+        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", outputFile])
 
         // Then
         XCTAssertEqual(result.exitCode, 0, "Should compress large file successfully")
@@ -444,8 +444,8 @@ final class CLIIntegrationTests: XCTestCase {
         let inputFile = createTestFile(name: "binary.bin", data: binaryData)
         let outputFile = inputFile.path + ".lzfse"
 
-        // When
-        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse"])
+        // When - explicitly specify output to avoid stdout detection in test environment
+        let result = runCLI(arguments: ["c", inputFile.path, "-m", "lzfse", "-o", outputFile])
 
         // Then
         XCTAssertEqual(result.exitCode, 0, "Should compress binary file")

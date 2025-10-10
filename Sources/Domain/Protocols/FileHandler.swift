@@ -45,4 +45,16 @@ protocol FileHandlerProtocol {
     /// - Parameter path: Directory path
     /// - Throws: InfrastructureError if creation fails
     func createDirectory(at path: String) throws
+
+    /// Create input stream from source (file or stdin)
+    /// - Parameter source: Input source (file path or stdin)
+    /// - Returns: Configured input stream ready for reading
+    /// - Throws: InfrastructureError if stream creation fails
+    func inputStream(from source: InputSource) throws -> InputStream
+
+    /// Create output stream to destination (file or stdout)
+    /// - Parameter destination: Output destination (file path or stdout)
+    /// - Returns: Configured output stream ready for writing
+    /// - Throws: InfrastructureError if stream creation fails
+    func outputStream(to destination: OutputDestination) throws -> OutputStream
 }

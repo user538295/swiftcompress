@@ -92,11 +92,11 @@ final class CommandRouter: CommandRouterProtocol {
             return .failure(error: error)
         }
 
-        // Create compress command with dependencies
+        // Create compress command with dependencies using new InputSource/OutputDestination
         let compressCommand = CompressCommand(
-            inputPath: command.inputPath,
+            inputSource: command.inputSource,
             algorithmName: algorithmName,
-            outputPath: command.outputPath,
+            outputDestination: command.outputDestination,
             forceOverwrite: command.forceOverwrite,
             fileHandler: fileHandler,
             pathResolver: pathResolver,
@@ -112,12 +112,13 @@ final class CommandRouter: CommandRouterProtocol {
     /// - Parameter command: Parsed command with decompression parameters
     /// - Returns: Result of decompression operation
     private func routeDecompressCommand(_ command: ParsedCommand) -> CommandResult {
-        // Create decompress command with dependencies
-        // Algorithm name is optional for decompression (can be inferred)
+        // Create decompress command with dependencies using new InputSource/OutputDestination
+        // Algorithm name is optional for file-based decompression (can be inferred)
+        // but required for stdin decompression
         let decompressCommand = DecompressCommand(
-            inputPath: command.inputPath,
+            inputSource: command.inputSource,
             algorithmName: command.algorithmName,
-            outputPath: command.outputPath,
+            outputDestination: command.outputDestination,
             forceOverwrite: command.forceOverwrite,
             fileHandler: fileHandler,
             pathResolver: pathResolver,

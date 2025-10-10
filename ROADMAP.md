@@ -196,39 +196,87 @@
 
 ## Future Work
 
-### 🔧 Phase 2: Performance (Remaining)
+### 🚀 Phase 3: Advanced Features (Future)
 
-**Target**: TBD
-**Status**: Optional enhancements
+**Target**: 4-6 weeks for stdin/stdout feature
+**Status**: Design complete for stdin/stdout (1/3 features designed)
 
-- [ ] Performance testing (files >1 GB)
-- [ ] Performance optimization and benchmarking
-- [ ] CI/CD setup (GitHub Actions)
+#### Feature 1: stdin/stdout Streaming Support
 
-**Notes**:
-- Current performance is excellent for typical use cases
-- 100 MB files process in <1 second with <10 MB memory
-- Further optimization is low priority
+**Status**: 📋 Design Complete - Ready for Implementation
+**Priority**: High (most requested feature)
+**Estimated Effort**: 4 weeks
+
+**What It Enables**:
+```bash
+# Read from stdin, write to file
+cat file.txt | swiftcompress c -m lzfse -o output.lzfse
+
+# Read from file, write to stdout
+swiftcompress c input.txt -m lzfse | ssh remote "cat > file.lzfse"
+
+# Full pipeline (stdin → stdout)
+cat file.txt | swiftcompress c -m lzfse | swiftcompress x -m lzfse > output.txt
+```
+
+**Design Documentation**:
+- ✅ [ADR-007: stdin/stdout Streaming Support](Documentation/ADRs/ADR-007-stdin-stdout-streaming.md) - Architectural decision (40 pages)
+- ✅ [Design Specification](Documentation/stdin-stdout-design-specification.md) - Detailed technical design (50 pages)
+- ✅ [Architecture Diagrams](Documentation/stdin-stdout-architecture-diagrams.md) - Visual documentation (30 pages, 15+ diagrams)
+- ✅ [Implementation Guide](Documentation/stdin-stdout-implementation-guide.md) - Step-by-step implementation (40 pages)
+- ✅ [Summary Document](Documentation/stdin-stdout-SUMMARY.md) - Executive summary and quick reference
+
+**Key Design Decisions**:
+- Enum-based abstractions (`InputSource`, `OutputDestination`)
+- Automatic pipe detection using `isatty()`
+- Algorithm required for stdin decompression (cannot infer from extension)
+- Leverages existing streaming infrastructure (same ~9.6 MB memory footprint)
+- Zero breaking changes to existing functionality
+
+**Implementation Timeline** (4 weeks):
+- **Week 1**: Foundation types and protocols (InputSource, OutputDestination, TerminalDetector)
+- **Week 2**: Core integration (ArgumentParser, Commands, FileHandler updates)
+- **Week 3**: Testing (unit, integration, E2E tests)
+- **Week 4**: Documentation and performance validation
+
+**Files Affected**:
+- New: 8 files (types, utilities, tests)
+- Modified: 11 files (ArgumentParser, Commands, protocols, implementations)
+- Test updates: Many (ParsedCommand type changes)
+
+**Validation Criteria**:
+- All 279 existing tests pass unchanged
+- All 6 stdin/stdout combinations work (compress/decompress × stdin/file/stdout)
+- Memory usage remains ~9.6 MB constant
+- Performance within 10% of file-based operations
+- 85%+ test coverage maintained
+
+**Next Steps**:
+1. Review and approve architectural design
+2. Allocate 4-week development timeline
+3. Begin Week 1: Create InputSource and OutputDestination enums
+4. Follow [Implementation Guide](Documentation/stdin-stdout-implementation-guide.md)
 
 ---
 
-### 🚀 Phase 3: Advanced Features (Future)
+#### Feature 2: Compression Level Flags
 
-**Target**: TBD based on user feedback
-**Status**: Not started (0/3 features)
-
-#### Planned Features
-
-- [ ] **stdin/stdout streaming support**
-  - Enable piping in shell scripts
-  - Usage: `cat file.txt | swiftcompress c -m lzfse > output.lzfse`
-  - Requires: FileHandle integration, stdin/stdout detection
-  - See [ADR-003](Documentation/ADRs/ADR-003-stream-processing.md) for design considerations
+**Status**: Not yet designed
+**Priority**: Medium
+**Estimated Effort**: 2 weeks
 
 - [ ] **Compression level flags (`--fast`, `--best`)**
   - Algorithm-specific tuning where supported
   - Usage: `swiftcompress c file.txt -m lzma --best`
   - Requires: Research which algorithms support level tuning
+
+---
+
+#### Feature 3: Progress Indicators
+
+**Status**: Not yet designed
+**Priority**: Low
+**Estimated Effort**: 2 weeks
 
 - [ ] **Progress indicators**
   - Show progress for large file operations

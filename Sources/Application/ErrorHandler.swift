@@ -156,6 +156,22 @@ final class ErrorHandler: ErrorHandlerProtocol {
             errorMessage += "Please specify the algorithm explicitly using: -m <algorithm>"
 
             message = errorMessage
+
+        case .outputDestinationRequired(let reason):
+            message = """
+            Error: Cannot determine output destination.
+            \(reason)
+
+            Usage:
+              cat file.txt | swiftcompress c -m lzfse -o output.lzfse
+              cat file.txt | swiftcompress c -m lzfse > output.lzfse
+            """
+
+        case .stdinNotAvailable(let reason):
+            message = "Error: stdin is not available. \(reason)"
+
+        case .stdoutNotAvailable(let reason):
+            message = "Error: stdout is not available. \(reason)"
         }
 
         return UserFacingError(message: message, exitCode: 1, shouldPrintStackTrace: false)
