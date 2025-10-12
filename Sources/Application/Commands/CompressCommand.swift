@@ -66,19 +66,12 @@ final class CompressCommand: Command {
     /// Execute compression workflow
     /// - Throws: DomainError or InfrastructureError on failure
     func execute() throws {
-        // Step 1: Validate input (only for file sources)
-        if case .file(let path) = inputSource {
-            try validationRules.validateInputPath(path)
-
-            // Check input file exists and is readable
-            guard fileHandler.fileExists(at: path) else {
-                throw InfrastructureError.fileNotFound(path: path)
-            }
-
-            guard fileHandler.isReadable(at: path) else {
-                throw InfrastructureError.fileNotReadable(path: path, reason: "Permission denied")
-            }
-        }
+        // Step 1: Validate input
+        try CommandWorkflowHelpers.validateFileInput(
+            source: inputSource,
+            fileHandler: fileHandler,
+            validationRules: validationRules
+        )
 
         // Step 2: Validate algorithm name
         try validationRules.validateAlgorithmName(
@@ -93,27 +86,15 @@ final class CompressCommand: Command {
             outputDestination: outputDestination
         )
 
-        // Step 4: Validate output destination (only for file destinations)
-        if case .file(let outputPath) = resolvedOutputDestination {
-            // Validate output path
-            if case .file(let inputPath) = inputSource {
-                try validationRules.validateOutputPath(outputPath, inputPath: inputPath)
-            } else {
-                // For stdin input, just validate the output path format
-                try validationRules.validateOutputPath(outputPath, inputPath: "")
-            }
-
-            // Check if output exists and handle force flag
-            if fileHandler.fileExists(at: outputPath) && !forceOverwrite {
-                throw DomainError.outputFileExists(path: outputPath)
-            }
-
-            // Check output directory is writable
-            let outputDirectory = (outputPath as NSString).deletingLastPathComponent
-            if !outputDirectory.isEmpty && !fileHandler.isWritable(at: outputDirectory) {
-                throw InfrastructureError.directoryNotWritable(path: outputDirectory)
-            }
-        }
+        // Step 4: Validate output destination
+        try CommandWorkflowHelpers.validateFileOutput(
+            destination: resolvedOutputDestination,
+            inputSource: inputSource,
+            forceOverwrite: forceOverwrite,
+            fileHandler: fileHandler,
+            validationRules: validationRules,
+            createDirectoryIfNeeded: false
+        )
 
         // Step 5: Get algorithm from registry
         guard let algorithm = algorithmRegistry.algorithm(named: algorithmName) else {
@@ -121,53 +102,36 @@ final class CompressCommand: Command {
         }
 
         // Step 6: Setup progress tracking
-        // Get file size for progress tracking (0 if stdin or unknown)
-        let totalBytes: Int64
-        if case .file(let path) = inputSource {
-            totalBytes = (try? fileHandler.fileSize(at: path)) ?? 0
-        } else {
-            totalBytes = 0  // stdin - unknown size
-        }
-
-        // Create progress reporter
-        let progressReporter = progressCoordinator.createReporter(
-            progressEnabled: progressEnabled,
-            outputDestination: resolvedOutputDestination
-        )
-
-        // Set operation description
         let operationDescription = "Compressing \(inputSource.description)"
-        progressReporter.setDescription(operationDescription)
-
-        // Step 7: Create input stream
-        let rawInputStream = try fileHandler.inputStream(from: inputSource)
-
-        // Wrap with progress tracking
-        let inputStream = progressCoordinator.wrapInputStream(
-            rawInputStream,
-            totalBytes: totalBytes,
-            reporter: progressReporter
+        let (progressReporter, inputStream) = try CommandWorkflowHelpers.setupProgressTracking(
+            inputSource: inputSource,
+            outputDestination: resolvedOutputDestination,
+            progressEnabled: progressEnabled,
+            operationDescription: operationDescription,
+            fileHandler: fileHandler,
+            progressCoordinator: progressCoordinator
         )
 
-        // Ensure streams are closed on exit
+        // Ensure streams are closed and cleanup on exit
         var outputStreamCreated = false
         var success = false
 
         defer {
             inputStream.close()
 
-            // Clean up partial output on failure (only for file outputs)
+            // Clean up partial output on failure
             if outputStreamCreated && !success {
-                if case .file(let outputPath) = resolvedOutputDestination {
-                    try? fileHandler.deleteFile(at: outputPath)
-                }
+                CommandWorkflowHelpers.cleanupPartialOutput(
+                    destination: resolvedOutputDestination,
+                    fileHandler: fileHandler
+                )
             }
 
             // Clear progress indicator on exit (success or failure)
             progressReporter.complete()
         }
 
-        // Step 8: Create output stream
+        // Step 7: Create output stream
         let outputStream = try fileHandler.outputStream(to: resolvedOutputDestination)
         outputStreamCreated = true
 
@@ -175,7 +139,7 @@ final class CompressCommand: Command {
             outputStream.close()
         }
 
-        // Step 9: Execute compression
+        // Step 8: Execute compression
         // Use buffer size from compression level for optimal performance
         let bufferSize = compressionLevel.bufferSize
         try algorithm.compressStream(

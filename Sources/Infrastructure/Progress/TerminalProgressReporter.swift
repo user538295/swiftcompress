@@ -162,6 +162,9 @@ public final class TerminalProgressReporter: ProgressReporterProtocol {
     }
 
     /// Format byte count in human-readable format
+    /// NOTE: This uses a custom implementation instead of Int64.formattedByteCount()
+    /// to ensure consistent formatting across all locales (always uses "." as decimal
+    /// separator, short unit names, and consistent decimal places for progress display)
     /// - Parameter bytes: Number of bytes
     /// - Returns: Formatted string (e.g., "5.2 MB", "1.3 GB")
     private func formatBytes(_ bytes: Int64) -> String {

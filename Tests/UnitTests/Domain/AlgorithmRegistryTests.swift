@@ -1,5 +1,6 @@
 import XCTest
 @testable import swiftcompress
+import TestHelpers
 
 final class AlgorithmRegistryTests: XCTestCase {
 

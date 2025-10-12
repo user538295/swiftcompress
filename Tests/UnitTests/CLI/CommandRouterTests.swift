@@ -16,7 +16,7 @@ final class CommandRouterTests: XCTestCase {
     // MARK: - Test Infrastructure
 
     var router: CommandRouter!
-    var mockFileHandler: MockFileHandler!
+    var mockFileHandler: RouterMockFileHandler!
     var algorithmRegistry: AlgorithmRegistry!
     var pathResolver: FilePathResolver!
     var validationRules: ValidationRules!
@@ -30,7 +30,7 @@ final class CommandRouterTests: XCTestCase {
         cleanupTestFiles()
 
         // Initialize mock dependencies
-        mockFileHandler = MockFileHandler()
+        mockFileHandler = RouterMockFileHandler()
         algorithmRegistry = AlgorithmRegistry()
         pathResolver = FilePathResolver()
         validationRules = ValidationRules()
@@ -38,10 +38,10 @@ final class CommandRouterTests: XCTestCase {
         commandExecutor = CommandExecutor(errorHandler: errorHandler)
 
         // Register test algorithms
-        algorithmRegistry.register(MockAlgorithm(name: "lzfse"))
-        algorithmRegistry.register(MockAlgorithm(name: "lz4"))
-        algorithmRegistry.register(MockAlgorithm(name: "zlib"))
-        algorithmRegistry.register(MockAlgorithm(name: "lzma"))
+        algorithmRegistry.register(RouterMockAlgorithm(name: "lzfse"))
+        algorithmRegistry.register(RouterMockAlgorithm(name: "lz4"))
+        algorithmRegistry.register(RouterMockAlgorithm(name: "zlib"))
+        algorithmRegistry.register(RouterMockAlgorithm(name: "lzma"))
 
         // Create router with dependencies
         router = CommandRouter(
@@ -629,9 +629,9 @@ final class CommandRouterTests: XCTestCase {
     }
 }
 
-// MARK: - Mock FileHandler
+// MARK: - Mock FileHandler (Router-specific)
 
-class MockFileHandler: FileHandlerProtocol {
+class RouterMockFileHandler: FileHandlerProtocol {
     var fileExistsResult: Bool = false
     var isReadableResult: Bool = false
     var isWritableResult: Bool = false
@@ -723,9 +723,9 @@ class MockFileHandler: FileHandlerProtocol {
     }
 }
 
-// MARK: - Mock Algorithm
+// MARK: - Mock Algorithm (Router-specific)
 
-class MockAlgorithm: CompressionAlgorithmProtocol {
+class RouterMockAlgorithm: CompressionAlgorithmProtocol {
     let name: String
     let supportsCustomLevels = false
 

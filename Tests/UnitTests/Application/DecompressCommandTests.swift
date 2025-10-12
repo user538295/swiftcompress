@@ -1,5 +1,6 @@
 import XCTest
 @testable import swiftcompress
+import TestHelpers
 
 /// Comprehensive unit tests for DecompressCommand
 /// Tests all workflow steps, validation, error handling, and edge cases
@@ -7,23 +8,23 @@ final class DecompressCommandTests: XCTestCase {
 
     // MARK: - Test Fixtures
 
-    private var mockFileHandler: DecompressMockFileHandler!
+    private var mockFileHandler: MockFileHandler!
     private var pathResolver: FilePathResolver!
     private var validationRules: ValidationRules!
     private var algorithmRegistry: AlgorithmRegistry!
-    private var mockAlgorithm: DecompressMockAlgorithm!
+    private var mockAlgorithm: MockCompressionAlgorithm!
 
     // MARK: - Setup & Teardown
 
     override func setUp() {
         super.setUp()
-        mockFileHandler = DecompressMockFileHandler()
+        mockFileHandler = MockFileHandler()
         pathResolver = FilePathResolver()
         validationRules = ValidationRules()
         algorithmRegistry = AlgorithmRegistry()
 
         // Register mock algorithm
-        mockAlgorithm = DecompressMockAlgorithm(name: "lzfse")
+        mockAlgorithm = MockCompressionAlgorithm(name: "lzfse")
         algorithmRegistry.register(mockAlgorithm)
     }
 
@@ -76,7 +77,7 @@ final class DecompressCommandTests: XCTestCase {
         let inputPath = "/tmp/file.txt.lz4"
 
         // Register lz4 algorithm
-        let lz4Algorithm = DecompressMockAlgorithm(name: "lz4")
+        let lz4Algorithm = MockCompressionAlgorithm(name: "lz4")
         algorithmRegistry.register(lz4Algorithm)
 
         mockFileHandler.fileExistsResults = [
@@ -109,7 +110,7 @@ final class DecompressCommandTests: XCTestCase {
         let inputPath = "/tmp/archive.zlib"
 
         // Register zlib algorithm
-        let zlibAlgorithm = DecompressMockAlgorithm(name: "zlib")
+        let zlibAlgorithm = MockCompressionAlgorithm(name: "zlib")
         algorithmRegistry.register(zlibAlgorithm)
 
         mockFileHandler.fileExistsResults = [
@@ -143,7 +144,7 @@ final class DecompressCommandTests: XCTestCase {
         let outputPath = "/tmp/test"
 
         // Register lzma algorithm
-        let lzmaAlgorithm = DecompressMockAlgorithm(name: "lzma")
+        let lzmaAlgorithm = MockCompressionAlgorithm(name: "lzma")
         algorithmRegistry.register(lzmaAlgorithm)
 
         mockFileHandler.fileExistsResults = [
@@ -405,7 +406,7 @@ final class DecompressCommandTests: XCTestCase {
         let inputPath = "/tmp/file.lzfse"  // Extension suggests lzfse
 
         // Register both algorithms
-        let lz4Algorithm = DecompressMockAlgorithm(name: "lz4")
+        let lz4Algorithm = MockCompressionAlgorithm(name: "lz4")
         algorithmRegistry.register(lz4Algorithm)
 
         mockFileHandler.fileExistsResults = [
@@ -729,116 +730,5 @@ final class DecompressCommandTests: XCTestCase {
 
         // Act & Assert - should work (case-insensitive)
         XCTAssertNoThrow(try command.execute())
-    }
-}
-
-// MARK: - Mock FileHandler
-
-private class DecompressMockFileHandler: FileHandlerProtocol {
-    var fileExistsResults: [String: Bool] = [:]
-    var isReadableResults: [String: Bool] = [:]
-    var isWritableResults: [String: Bool] = [:]
-
-    var inputStreamPaths: [String] = []
-    var outputStreamPaths: [String] = []
-    var deleteFilePaths: [String] = []
-    var createDirectoryPaths: [String] = []
-
-    var inputStreamError: Error?
-    var outputStreamError: Error?
-
-    func fileExists(at path: String) -> Bool {
-        return fileExistsResults[path] ?? false
-    }
-
-    func isReadable(at path: String) -> Bool {
-        return isReadableResults[path] ?? false
-    }
-
-    func isWritable(at path: String) -> Bool {
-        return isWritableResults[path] ?? false
-    }
-
-    func fileSize(at path: String) throws -> Int64 {
-        return 1024
-    }
-
-    func inputStream(at path: String) throws -> InputStream {
-        inputStreamPaths.append(path)
-        if let error = inputStreamError {
-            throw error
-        }
-        // Return a valid stream for testing
-        return InputStream(data: Data())
-    }
-
-    func outputStream(at path: String) throws -> OutputStream {
-        outputStreamPaths.append(path)
-        if let error = outputStreamError {
-            throw error
-        }
-        // Return a valid stream for testing
-        return OutputStream(toMemory: ())
-    }
-
-    func deleteFile(at path: String) throws {
-        deleteFilePaths.append(path)
-    }
-
-    func createDirectory(at path: String) throws {
-        createDirectoryPaths.append(path)
-    }
-
-    // MARK: - stdin/stdout Support
-
-    func inputStream(from source: InputSource) throws -> InputStream {
-        switch source {
-        case .file(let path):
-            return try inputStream(at: path)
-        case .stdin:
-            // For testing, return empty stream
-            return InputStream(data: Data())
-        }
-    }
-
-    func outputStream(to destination: OutputDestination) throws -> OutputStream {
-        switch destination {
-        case .file(let path):
-            return try outputStream(at: path)
-        case .stdout:
-            // For testing, return memory stream
-            return OutputStream(toMemory: ())
-        }
-    }
-}
-
-// MARK: - Mock Algorithm with Stream Support
-
-private class DecompressMockAlgorithm: CompressionAlgorithmProtocol {
-    let name: String
-    let supportsCustomLevels = false
-    var decompressStreamError: Error?
-
-    init(name: String) {
-        self.name = name
-    }
-
-    func compress(input: Data) throws -> Data {
-        return Data()
-    }
-
-    func decompress(input: Data) throws -> Data {
-        return input
-    }
-
-    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int, compressionLevel: CompressionLevel = .balanced) throws {
-        // Not used in decompress tests
-    }
-
-    func decompressStream(input: InputStream, output: OutputStream, bufferSize: Int) throws {
-        if let error = decompressStreamError {
-            throw error
-        }
-        // Success - do nothing
     }
 }

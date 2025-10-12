@@ -47,7 +47,7 @@ enum DomainError: SwiftCompressError {
         case .inputFileEmpty(let path):
             return "Cannot compress empty file: \(path)"
         case .fileTooLarge(let path, let size, let limit):
-            return "File too large: \(path) (\(formatBytes(size))), limit is \(formatBytes(limit))"
+            return "File too large: \(path) (\(size.formattedByteCount())), limit is \(limit.formattedByteCount())"
         case .missingRequiredArgument(let argumentName):
             return "Missing required argument: \(argumentName)"
         case .invalidFlagCombination(let flags, let reason):
@@ -99,11 +99,5 @@ enum DomainError: SwiftCompressError {
 
     var underlyingError: Error? {
         return nil  // Domain errors have no underlying system errors
-    }
-
-    private func formatBytes(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
     }
 }

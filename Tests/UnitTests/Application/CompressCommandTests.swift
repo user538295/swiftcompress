@@ -1,5 +1,6 @@
 import XCTest
 @testable import swiftcompress
+import TestHelpers
 
 /// Comprehensive unit tests for CompressCommand
 /// Tests all workflow steps, validation, error handling, and edge cases
@@ -7,23 +8,23 @@ final class CompressCommandTests: XCTestCase {
 
     // MARK: - Test Fixtures
 
-    private var mockFileHandler: CompressMockFileHandler!
+    private var mockFileHandler: MockFileHandler!
     private var pathResolver: FilePathResolver!
     private var validationRules: ValidationRules!
     private var algorithmRegistry: AlgorithmRegistry!
-    private var mockAlgorithm: CompressMockAlgorithm!
+    private var mockAlgorithm: MockCompressionAlgorithm!
 
     // MARK: - Setup & Teardown
 
     override func setUp() {
         super.setUp()
-        mockFileHandler = CompressMockFileHandler()
+        mockFileHandler = MockFileHandler()
         pathResolver = FilePathResolver()
         validationRules = ValidationRules()
         algorithmRegistry = AlgorithmRegistry()
 
         // Register mock algorithm
-        mockAlgorithm = CompressMockAlgorithm(name: "lzfse")
+        mockAlgorithm = MockCompressionAlgorithm(name: "lzfse")
         algorithmRegistry.register(mockAlgorithm)
     }
 
@@ -711,120 +712,5 @@ final class CompressCommandTests: XCTestCase {
 
         // Assert
         XCTAssertEqual(mockAlgorithm.lastBufferSize, 65536)  // 64KB
-    }
-}
-
-// MARK: - Mock FileHandler
-
-private class CompressMockFileHandler: FileHandlerProtocol {
-    var fileExistsResults: [String: Bool] = [:]
-    var isReadableResults: [String: Bool] = [:]
-    var isWritableResults: [String: Bool] = [:]
-
-    var inputStreamPaths: [String] = []
-    var outputStreamPaths: [String] = []
-    var deleteFilePaths: [String] = []
-
-    var inputStreamError: Error?
-    var outputStreamError: Error?
-
-    func fileExists(at path: String) -> Bool {
-        return fileExistsResults[path] ?? false
-    }
-
-    func isReadable(at path: String) -> Bool {
-        return isReadableResults[path] ?? false
-    }
-
-    func isWritable(at path: String) -> Bool {
-        return isWritableResults[path] ?? false
-    }
-
-    func fileSize(at path: String) throws -> Int64 {
-        return 1024
-    }
-
-    func inputStream(at path: String) throws -> InputStream {
-        inputStreamPaths.append(path)
-        if let error = inputStreamError {
-            throw error
-        }
-        return InputStream(data: Data())
-    }
-
-    func outputStream(at path: String) throws -> OutputStream {
-        outputStreamPaths.append(path)
-        if let error = outputStreamError {
-            throw error
-        }
-        return OutputStream(toMemory: ())
-    }
-
-    func deleteFile(at path: String) throws {
-        deleteFilePaths.append(path)
-    }
-
-    func createDirectory(at path: String) throws {
-        // No-op for tests
-    }
-
-    // MARK: - stdin/stdout Support
-
-    func inputStream(from source: InputSource) throws -> InputStream {
-        switch source {
-        case .file(let path):
-            return try inputStream(at: path)
-        case .stdin:
-            // For testing, return empty stream
-            return InputStream(data: Data())
-        }
-    }
-
-    func outputStream(to destination: OutputDestination) throws -> OutputStream {
-        switch destination {
-        case .file(let path):
-            return try outputStream(at: path)
-        case .stdout:
-            // For testing, return memory stream
-            return OutputStream(toMemory: ())
-        }
-    }
-}
-
-// MARK: - Mock Algorithm
-
-private class CompressMockAlgorithm: CompressionAlgorithmProtocol {
-    let name: String
-    let supportsCustomLevels = false
-    var compressStreamCalled = false
-    var compressStreamError: Error?
-    var lastBufferSize: Int?
-    var lastCompressionLevel: CompressionLevel?
-
-    init(name: String) {
-        self.name = name
-    }
-
-    func compress(input: Data) throws -> Data {
-        return Data()
-    }
-
-    func decompress(input: Data) throws -> Data {
-        return input
-    }
-
-    func compressStream(input: InputStream, output: OutputStream, bufferSize: Int, compressionLevel: CompressionLevel = .balanced) throws {
-        compressStreamCalled = true
-        lastBufferSize = bufferSize
-        lastCompressionLevel = compressionLevel
-
-        if let error = compressStreamError {
-            throw error
-        }
-        // Success - do nothing
-    }
-
-    func decompressStream(input: InputStream, output: OutputStream, bufferSize: Int) throws {
-        // Not used in compress tests
     }
 }

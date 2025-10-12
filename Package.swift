@@ -31,11 +31,21 @@ let package = Package(
             ]
         ),
 
+        // Test helpers target (shared mocks and fixtures)
+        .target(
+            name: "TestHelpers",
+            dependencies: ["swiftcompress"],
+            path: "Tests/TestHelpers"
+        ),
+
         // Test target
         .testTarget(
             name: "swiftcompressTests",
-            dependencies: ["swiftcompress"],
-            path: "Tests"
+            dependencies: ["swiftcompress", "TestHelpers"],
+            path: "Tests",
+            exclude: [
+                "TestHelpers"  // Exclude since it's a separate target
+            ]
         ),
     ]
 )

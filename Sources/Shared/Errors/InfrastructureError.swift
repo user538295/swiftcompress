@@ -44,7 +44,7 @@ enum InfrastructureError: SwiftCompressError {
         case .directoryNotWritable(let path):
             return "Directory not writable: \(path)"
         case .insufficientDiskSpace(let required, let available):
-            return "Insufficient disk space. Required: \(formatBytes(required)), Available: \(formatBytes(available))"
+            return "Insufficient disk space. Required: \(required.formattedByteCount()), Available: \(available.formattedByteCount())"
         case .readFailed(let path, _):
             return "Failed to read file: \(path)"
         case .writeFailed(let path, _):
@@ -107,12 +107,5 @@ enum InfrastructureError: SwiftCompressError {
         default:
             return nil
         }
-    }
-
-    // Helper function
-    private func formatBytes(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
     }
 }

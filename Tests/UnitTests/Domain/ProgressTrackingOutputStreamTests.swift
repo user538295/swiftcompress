@@ -1,34 +1,11 @@
 import XCTest
 import Foundation
 @testable import swiftcompress
+import TestHelpers
 
 /// Unit tests for ProgressTrackingOutputStream
 /// Tests stream wrapping and progress tracking functionality for output
 final class ProgressTrackingOutputStreamTests: XCTestCase {
-
-    // MARK: - Mock Progress Reporter
-
-    class MockProgressReporter: ProgressReporterProtocol {
-        var updateCallCount = 0
-        var lastBytesProcessed: Int64 = 0
-        var lastTotalBytes: Int64 = 0
-        var completeCallCount = 0
-        var lastDescription: String?
-
-        func update(bytesProcessed: Int64, totalBytes: Int64) {
-            updateCallCount += 1
-            lastBytesProcessed = bytesProcessed
-            lastTotalBytes = totalBytes
-        }
-
-        func complete() {
-            completeCallCount += 1
-        }
-
-        func setDescription(_ description: String) {
-            lastDescription = description
-        }
-    }
 
     // MARK: - Tests
 

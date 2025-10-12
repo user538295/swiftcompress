@@ -136,8 +136,8 @@ final class ErrorHandler: ErrorHandlerProtocol {
             message = "Error: Cannot compress empty file: \(path)"
 
         case .fileTooLarge(let path, let size, let limit):
-            let sizeStr = formatBytes(size)
-            let limitStr = formatBytes(limit)
+            let sizeStr = size.formattedByteCount()
+            let limitStr = limit.formattedByteCount()
             message = "Error: File too large: \(path) (\(sizeStr)). Maximum size: \(limitStr)"
 
         case .missingRequiredArgument(let argumentName):
@@ -208,8 +208,8 @@ final class ErrorHandler: ErrorHandlerProtocol {
             message = "Error: Directory is not writable: \(path)\nCheck permissions."
 
         case .insufficientDiskSpace(let required, let available):
-            let requiredStr = formatBytes(required)
-            let availableStr = formatBytes(available)
+            let requiredStr = required.formattedByteCount()
+            let availableStr = available.formattedByteCount()
             message = "Error: Insufficient disk space. Required: \(requiredStr), Available: \(availableStr)"
 
         case .readFailed(let path, _):
@@ -274,11 +274,4 @@ final class ErrorHandler: ErrorHandlerProtocol {
         #endif
     }
 
-    // MARK: - Helper Methods
-
-    private func formatBytes(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
-    }
 }
