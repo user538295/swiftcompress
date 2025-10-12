@@ -9,7 +9,7 @@
 ## Overview
 
 **SwiftCompress** is a lightweight, scriptable CLI tool that provides explicit file compression and decompression using Apple's highly-optimized Compression framework. Built with Clean Architecture principles, it offers a simple interface to four industry-standard compression algorithms.
-Includes AI-generated code, carefully reviewed by a human.
+- Includes AI-generated code, carefully reviewed by a human.
 
 ### Key Features
 
