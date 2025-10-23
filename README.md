@@ -270,9 +270,7 @@ swiftcompress/
 
 ## Project Status & Roadmap
 
-**Current Version**: 1.2.0 (Production Ready)
-**Status**: ✅ Production-ready CLI tool with progress indicators
-**Test Coverage**: 95%+ (390/390 tests passing)
+> **Current Status**: See [STATUS.md](STATUS.md) for complete project metrics and validation results.
 
 ### Recent Milestones
 
@@ -320,7 +318,7 @@ swift test --enable-code-coverage
 swift test --filter CompressCommandTests
 ```
 
-The project maintains **95%+ test coverage** across all layers with comprehensive unit, integration, and E2E tests. Currently **390 tests passing** with 0 failures.
+The project maintains **95%+ test coverage** across all layers with comprehensive unit, integration, and E2E tests. See [STATUS.md](STATUS.md) for current test metrics.
 
 ## Performance
 
@@ -370,23 +368,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Status
 
-**Current Version**: 1.2.0 (Production Ready)
-**Status**: ✅ Production-ready CLI tool with progress indicators
-**Test Coverage**: 95%+ (390/390 tests passing)
-**Last Updated**: October 2025
+> **For complete status information, metrics, and validation results, see [STATUS.md](STATUS.md)**
 
-### Production Features
-- ✅ All 4 compression algorithms working (LZFSE, LZ4, ZLIB, LZMA)
-- ✅ Complete CLI interface with ArgumentParser
-- ✅ Full compress/decompress workflows
-- ✅ **Unix pipeline support (stdin/stdout streaming)**
-- ✅ **Progress indicators (opt-in with --progress flag)**
-- ✅ **Compression level flags (--fast, --best)**
-- ✅ Comprehensive error handling
-- ✅ 95%+ test coverage across all layers
-- ✅ Clean Architecture fully implemented
-- ✅ Round-trip data integrity verified
-- ✅ True streaming with constant memory footprint
+**Quick Summary**: Production-ready v1.2.0 with all planned features complete (411/411 tests passing, 95%+ coverage).
 
 ---
 

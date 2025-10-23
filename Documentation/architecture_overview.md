@@ -2,13 +2,17 @@
 
 **Project**: swiftcompress
 **Type**: macOS CLI Tool
-**Language**: Swift
+**Language**: Swift 5.9+
 **Primary Framework**: Apple Compression Framework
-**Dependency Management**: Swift Package Manager
+**Architecture Pattern**: Clean Architecture (4 layers)
 
 ## Executive Summary
 
-SwiftCompress is a command-line tool for compressing and decompressing files using Apple's native Compression framework. The architecture follows Clean Architecture principles adapted for CLI applications, emphasizing clear separation of concerns, testability, and maintainability.
+SwiftCompress is a command-line tool for compressing and decompressing files using Apple's native Compression framework. The architecture follows **Clean Architecture principles** adapted for CLI applications, emphasizing clear separation of concerns, testability, and maintainability.
+
+**Status**: ✅ Production Ready (v1.2.0) - All 4 phases complete, 411 tests passing, 95%+ coverage
+
+This document provides a high-level architectural overview. For detailed component specifications, see [component_specifications.md](./component_specifications.md).
 
 ## Architectural Principles
 
@@ -130,78 +134,60 @@ graph TD
 ## Layer Responsibilities
 
 ### CLI Interface Layer
+**Purpose**: Handle user interaction through command-line interface
 
-**Purpose**: Handle all user interaction through command-line interface
-
-**Responsibilities**:
-- Parse command-line arguments using Swift ArgumentParser
+**Key Responsibilities**:
+- Parse command-line arguments (Swift ArgumentParser)
 - Route commands to appropriate handlers
 - Format output for stdout/stderr
 - Set process exit codes
-- Handle --help and --version flags
 
-**Key Components**:
-- `main.swift`: Application entry point
-- `ArgumentParser`: Wraps third-party CLI parsing library
-- `CommandRouter`: Maps parsed arguments to command handlers
-- `OutputFormatter`: Formats success/error messages for terminal
+**Dependencies**: Application Layer (command handlers)
 
-**Dependencies**: Application Layer command interfaces
+---
 
 ### Application Layer
+**Purpose**: Orchestrate business operations and workflows
 
-**Purpose**: Orchestrate business operations and handle application workflows
-
-**Responsibilities**:
+**Key Responsibilities**:
 - Execute compression/decompression workflows
 - Coordinate between domain services
-- Handle business-level error scenarios
+- Handle application-level errors
 - Manage file overwrite logic
-- Apply default filename generation rules
+- Apply default filename generation
 
-**Key Components**:
-- `CompressCommand`: Orchestrates file compression workflow
-- `DecompressCommand`: Orchestrates file decompression workflow
-- `CommandExecutor`: Coordinates command execution
-- `ErrorHandler`: Translates domain errors to user-friendly messages
+**Dependencies**: Domain Layer (protocols/interfaces)
 
-**Dependencies**: Domain Layer abstractions (protocols/interfaces)
+---
 
 ### Domain Layer
+**Purpose**: Core business logic and rules (zero outward dependencies)
 
-**Purpose**: Contain core business logic and rules
-
-**Responsibilities**:
+**Key Responsibilities**:
 - Define compression algorithm abstractions
-- Implement algorithm selection and validation
-- Define file path resolution rules
-- Validate inputs against business rules
+- Algorithm selection and validation
+- File path resolution rules
+- Input validation and business rules
 - Maintain algorithm registry
 
-**Key Components**:
-- `CompressionEngine`: Core compression/decompression orchestration
-- `AlgorithmRegistry`: Registry of available compression algorithms
-- `FilePathResolver`: Resolves input/output file paths with defaults
-- `ValidationRules`: Business validation logic
+**Dependencies**: None (pure business logic)
 
-**Dependencies**: None (pure business logic with protocol definitions)
+---
 
 ### Infrastructure Layer
+**Purpose**: System integration and concrete implementations
 
-**Purpose**: Provide concrete implementations for external systems
-
-**Responsibilities**:
+**Key Responsibilities**:
 - Integrate with Apple Compression Framework
-- Perform actual file system operations
-- Handle binary data streaming
-- Manage system-level I/O
-
-**Key Components**:
-- `AppleCompressionAdapter`: Wraps Apple Compression Framework
-- `FileSystemHandler`: Implements file operations via FileManager
-- `StreamProcessor`: Handles data streaming for large files
+- File system operations (FileManager)
+- Binary data streaming (64 KB buffers)
+- System-level I/O
 
 **Dependencies**: System frameworks (Foundation, Compression)
+
+---
+
+**For detailed component specifications, interfaces, and implementation guidelines, see [component_specifications.md](./component_specifications.md).**
 
 ## Data Flow Architecture
 
@@ -316,67 +302,37 @@ flowchart LR
 
 ```
 swiftcompress/
-├── Sources/
+├── Sources/swiftcompress/
 │   ├── CLI/                    # CLI Interface Layer
-│   │   ├── main.swift
-│   │   ├── ArgumentParser.swift
-│   │   ├── CommandRouter.swift
-│   │   └── OutputFormatter.swift
-│   │
 │   ├── Application/            # Application Layer
-│   │   ├── Commands/
-│   │   │   ├── CompressCommand.swift
-│   │   │   └── DecompressCommand.swift
-│   │   ├── CommandExecutor.swift
-│   │   └── ErrorHandler.swift
-│   │
-│   ├── Domain/                 # Domain Layer
-│   │   ├── CompressionEngine.swift
-│   │   ├── AlgorithmRegistry.swift
-│   │   ├── FilePathResolver.swift
-│   │   ├── ValidationRules.swift
-│   │   └── Protocols/
-│   │       ├── CompressionAlgorithm.swift
-│   │       ├── FileHandler.swift
-│   │       └── OutputWriter.swift
-│   │
+│   ├── Domain/                 # Domain Layer (zero outward deps)
 │   └── Infrastructure/         # Infrastructure Layer
-│       ├── AppleCompressionAdapter.swift
-│       ├── FileSystemHandler.swift
-│       ├── StreamProcessor.swift
-│       └── Algorithms/
-│           ├── LZFSEAlgorithm.swift
-│           ├── LZ4Algorithm.swift
-│           ├── ZlibAlgorithm.swift
-│           └── LZMAAlgorithm.swift
 │
-└── Tests/
-    ├── UnitTests/
-    ├── IntegrationTests/
-    └── E2ETests/
+└── Tests/swiftcompressTests/
+    ├── UnitTests/             # 60% - Individual components
+    ├── IntegrationTests/      # 30% - Multi-component
+    └── E2ETests/              # 10% - Full CLI
 ```
+
+**For complete file structure and organization, see [module_structure.md](./module_structure.md).**
 
 ## Key Architectural Decisions
 
-### ADR-001: Clean Architecture for CLI Tool
-**Decision**: Adopt Clean Architecture with layer separation
-**Rationale**: Enables testability, maintainability, and clear separation of concerns
+All architectural decisions are documented in detail in the ADRs/ directory. Key decisions include:
 
-### ADR-002: Protocol-Based Algorithm Abstraction
-**Decision**: Use Swift protocols for compression algorithm abstraction
-**Rationale**: Allows easy addition of new algorithms without modifying existing code
+| ADR | Decision | Status |
+|-----|----------|--------|
+| [ADR-001](./ADRs/ADR-001-clean-architecture.md) | Clean Architecture with 4 layers | ✅ Implemented |
+| [ADR-002](./ADRs/ADR-002-protocol-abstraction.md) | Protocol-based algorithm abstraction | ✅ Implemented |
+| [ADR-003](./ADRs/ADR-003-stream-processing.md) | Stream-based processing (64 KB buffers) | ✅ Implemented |
+| [ADR-004](./ADRs/ADR-004-dependency-injection.md) | Constructor-based dependency injection | ✅ Implemented |
+| [ADR-005](./ADRs/ADR-005-explicit-algorithm-selection.md) | Explicit algorithm selection with `-m` flag | ✅ Implemented |
+| [ADR-006](./ADRs/ADR-006-compression-stream-api.md) | True streaming with compression_stream API | ✅ Implemented |
+| [ADR-007](./ADRs/ADR-007-stdin-stdout-streaming.md) | Unix pipeline support (stdin/stdout) | ✅ Implemented |
+| [ADR-008](./ADRs/ADR-008-compression-level-support.md) | Compression levels (--fast, --best) | ✅ Implemented |
+| [ADR-009](./ADRs/ADR-009-progress-indicator-support.md) | Progress indicators (--progress) | ✅ Implemented |
 
-### ADR-003: Stream-Based Processing
-**Decision**: Process files as streams rather than loading entirely into memory
-**Rationale**: Supports large file compression without memory constraints
-
-### ADR-004: Dependency Injection for Infrastructure
-**Decision**: Inject infrastructure dependencies at application startup
-**Rationale**: Enables testing with mocked implementations
-
-### ADR-005: Explicit Algorithm Selection Required (MVP)
-**Decision**: Require `-m` flag for compression operations in MVP
-**Rationale**: Simplifies initial implementation; auto-detection is future enhancement
+**For complete ADR documentation, see the [ADRs/](./ADRs/) directory.**
 
 ## Design Patterns Applied
 
@@ -405,105 +361,86 @@ swiftcompress/
 - Specific steps implemented by concrete algorithms
 - Ensures consistent error handling and validation
 
-## Performance Considerations
+## Performance Characteristics
 
-### Memory Management
-- Stream-based processing to handle large files
-- Chunked reading/writing (configurable buffer size)
-- Automatic memory cleanup with Swift ARC
+**Memory Management:**
+- Stream-based processing with 64 KB buffers
+- Constant memory footprint regardless of file size
+- Validated: ~9.6 MB peak memory for 100+ MB files
 
-### Scalability
-- Designed for single-file operations (MVP scope)
+**Scalability:**
+- Single-file operations (production)
 - Architecture supports future batch processing
-- Algorithm selection optimized with registry lookup
+- Handles files of arbitrary size
 
-### Error Recovery
-- Graceful degradation on failures
-- Atomic file operations where possible
-- Cleanup of partial output on errors
+**Validated Performance:**
+- 100 MB file compression: 0.67s (LZFSE)
+- 100 MB file decompression: 0.25s (LZFSE)
+- Memory usage: < 10 MB peak (independent of file size)
 
-## Security Considerations
+## Security Architecture
 
-### Input Validation
-- Path traversal prevention in file path resolution
-- Algorithm name validation against whitelist
-- File size limits for compression operations
+**Input Validation:**
+- Path traversal prevention
+- Algorithm name whitelist validation
+- Safe file overwrite protection
 
-### File System Security
+**File System Security:**
 - Respect system file permissions
-- Prevent overwriting without explicit `-f` flag
+- Explicit `-f` flag required for overwrite
 - Validate output paths before writing
 
-### Error Information Disclosure
-- Error messages don't expose sensitive system paths
-- Generic error codes for security-sensitive failures
+**Error Handling:**
+- No sensitive path disclosure in error messages
 - No stack traces in user-facing output
+- Generic error codes for security failures
 
-## Extensibility Points
+## Implementation Phases
 
-### Phase 1 (MVP)
-- Basic compress/decompress with four algorithms
-- File-based operations only
-- Explicit algorithm selection required
+| Phase | Features | Status |
+|-------|----------|--------|
+| **Phase 0** | Architecture planning | ✅ Complete |
+| **Phase 1** | MVP (4 algorithms, basic CLI) | ✅ Complete |
+| **Phase 2** | Usability (auto-detection, help) | ✅ Complete |
+| **Phase 3** | Unix pipelines (stdin/stdout) | ✅ Complete |
+| **Phase 4** | Advanced (levels, progress) | ✅ Complete |
 
-### Phase 2 (Usability)
-- Algorithm auto-detection from file extensions
-- Enhanced help system
-- Overwrite protection
+**For detailed roadmap and milestones, see [ROADMAP.md](../ROADMAP.md).**
 
-### Phase 3 (Advanced)
-- stdin/stdout streaming support
-- Compression level tuning
-- Progress indicators for large files
-- Batch file operations
+## Technology Stack
 
-## Dependencies and Integration Points
-
-### External Dependencies
-- **Swift ArgumentParser**: CLI argument parsing (Official Apple library)
-- **Apple Compression Framework**: Core compression functionality
-- **Foundation Framework**: File system operations, data handling
-
-### System Integration
-- **macOS FileManager**: File operations
-- **Standard Streams**: stdin, stdout, stderr
-- **Process Exit Codes**: Script integration
+| Component | Technology | Rationale |
+|-----------|-----------|-----------|
+| **Language** | Swift 5.9+ | Native macOS, type safety, performance |
+| **Compression** | Apple Compression Framework | Native, optimized, zero external deps |
+| **CLI Parsing** | Swift ArgumentParser | Official Apple library, type-safe |
+| **Testing** | XCTest | Native Swift testing, 95%+ coverage |
+| **Build** | Swift Package Manager | Native, integrated, modern |
 
 ## Quality Attributes
 
-### Testability
-- Protocol-based design enables easy mocking
-- Pure domain logic with no external dependencies
-- Integration test support with temporary file systems
+| Attribute | Implementation | Status |
+|-----------|----------------|--------|
+| **Testability** | Protocol-based design, pure domain layer, 95%+ coverage | ✅ Achieved |
+| **Maintainability** | Clear layer separation, SOLID principles, comprehensive docs | ✅ Achieved |
+| **Reliability** | Comprehensive error handling, input validation, atomic operations | ✅ Achieved |
+| **Performance** | Stream processing, constant memory, native Apple framework | ✅ Validated |
+| **Usability** | Clear error messages, standard CLI conventions, helpful defaults | ✅ Achieved |
+| **Extensibility** | Protocol abstractions, registry pattern, dependency injection | ✅ Achieved |
 
-### Maintainability
-- Clear layer separation
-- Single Responsibility Principle throughout
-- Comprehensive documentation
+## Related Documentation
 
-### Reliability
-- Comprehensive error handling at all layers
-- Input validation before operations
-- Atomic file operations where possible
+This overview provides high-level architectural understanding. For detailed information:
 
-### Usability
-- Clear error messages
-- Predictable default behavior
-- Standard CLI conventions (flags, help, exit codes)
+1. **[component_specifications.md](./component_specifications.md)** - Detailed component contracts and implementation guidelines
+2. **[module_structure.md](./module_structure.md)** - File organization and project structure
+3. **[data_flow_diagrams.md](./data_flow_diagrams.md)** - Visual data flow representations
+4. **[error_handling_strategy.md](./error_handling_strategy.md)** - Comprehensive error handling approach
+5. **[testing_strategy.md](./testing_strategy.md)** - Testing requirements and patterns
+6. **[ADRs/](./ADRs/)** - Architecture decision records with full context
 
-### Performance
-- Stream-based processing for memory efficiency
-- Native Apple framework for optimal speed
-- Minimal overhead from abstraction layers
+For development setup and workflow, see [SETUP.md](../SETUP.md) and [ROADMAP.md](../ROADMAP.md).
 
-## Next Steps
+---
 
-Implementation teams should review:
-1. **component_specifications.md** - Detailed component responsibilities
-2. **module_structure.md** - File organization and naming conventions
-3. **data_flow_diagrams.md** - Detailed operation flows
-4. **error_handling_strategy.md** - Comprehensive error handling approach
-5. **testing_strategy.md** - Testing requirements and approaches
-6. **ADRs/** - Individual architecture decision records
-
-This architecture provides a solid foundation for implementing a maintainable, testable, and extensible CLI compression tool that adheres to Swift and Clean Architecture best practices.
+**This architecture provides a production-ready foundation for a maintainable, testable, and extensible CLI compression tool following Clean Architecture and Swift best practices.**
